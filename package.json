@@ -1,0 +1,23 @@
+{
+  "name": "ft-pedalboard",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "render": "node scripts/render.ts",
+    "check": "node scripts/check-browser.ts",
+    "typecheck": "tsc --noEmit",
+    "check:plugin": "node scripts/check-plugin-ui.ts",
+    "gen": "node scripts/gen-plugin.ts",
+    "null-test": "node scripts/null-test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  }
+}

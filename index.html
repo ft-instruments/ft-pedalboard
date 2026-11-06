@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PEDALBOARD</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230d0a07'/%3E%3Cpath d='M1 11 C4 11 4 5 8 5 S12 11 15 11' stroke='%23ffb04a' stroke-width='1.6' fill='none'/%3E%3Crect x='6' y='3' width='4' height='4' fill='%23ffb04a'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/ft.css" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div class="vignette"></div>
+    <div class="grain"></div>
+
+    <svg class="defs" width="0" height="0" aria-hidden="true">
+      <defs>
+        <radialGradient id="ftCap" cx="0.38" cy="0.3" r="0.8">
+          <stop offset="0" stop-color="#4a423a" />
+          <stop offset="0.55" stop-color="#211c17" />
+          <stop offset="1" stop-color="#0f0c0a" />
+        </radialGradient>
+      </defs>
+    </svg>
+
+    <div id="app">
+      <header class="bar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+            <path class="cable" d="M1 22 C6 22 6 13 11 13 M21 13 C26 13 26 22 31 22" />
+            <rect class="box" x="11" y="8" width="10" height="13" rx="1.5" />
+            <circle class="lamp" cx="16" cy="11.5" r="1.6" />
+            <circle class="stomp" cx="16" cy="17" r="2.2" />
+          </svg>
+          <div>
+            <h1>pedalboard</h1>
+            <span class="sub">guitar rack <b>·</b> ft</span>
+          </div>
+        </div>
+
+        <div class="presets">
+          <button id="prev" class="round" title="previous rig (←)">
+            <svg viewBox="0 0 16 16"><path d="M10 3.5 5.5 8l4.5 4.5" /></svg>
+          </button>
+          <button id="browse" title="the rigs (/)">
+            <span class="tag" id="rig-tag">clean</span>
+            <span class="nm" id="rig-name">Glass Porch</span>
+          </button>
+          <button id="next" class="round" title="next rig (→)">
+            <svg viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
+          </button>
+          <div class="actions">
+            <button id="save" class="chip" title="save this rig (⌘S)">
+              <svg viewBox="0 0 16 16"><path d="M3 2.5h8l2.5 2.5v8.5h-10.5Z" /><path d="M5.5 2.5v3.5h4.5V2.5M5.5 13.5v-4h5v4" /></svg>
+              save
+            </button>
+            <button id="copy" class="chip" title="copy the rig as JSON (module names and knob values)">
+              <svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8.5" rx="2" /><path d="M3.5 10.5V4a2 2 0 0 1 2-2H10" /></svg>
+              copy
+            </button>
+          </div>
+        </div>
+
+        <button id="tuner" class="tuner" title="tuner: click to mute the output while you tune (T)" aria-live="off">
+          <span class="note" id="tuner-note">–</span>
+          <span class="scale"><span class="needle" id="tuner-needle"></span></span>
+          <span class="cents" id="tuner-cents">tuner</span>
+        </button>
+
+        <div class="status">
+          <div class="io">
+            <label class="master" title="volume">
+              <svg viewBox="0 0 16 16"><path d="M2.5 6h2.2L8 3v10L4.7 10H2.5Z" /><path d="M10.5 5.5a3.5 3.5 0 0 1 0 5M12.3 3.8a6 6 0 0 1 0 8.4" /></svg>
+              <input id="volume" type="range" min="0" max="1" step="0.01" value="0.7" aria-label="volume" />
+            </label>
+            <div class="source">
+              <select id="source" title="what plays into the board" aria-label="input source">
+                <option value="live">guitar in</option>
+                <option value="demo:0">demo · strum</option>
+                <option value="demo:1">demo · riff</option>
+                <option value="demo:2">demo · lick</option>
+                <option value="file">a file…</option>
+              </select>
+            </div>
+          </div>
+          <div class="io">
+            <span id="stats" class="muted"></span>
+            <div class="live-only" id="live-row">
+              <select id="device" title="audio interface" aria-label="audio interface"></select>
+              <select id="channel" title="which input the guitar is in" aria-label="input channel">
+                <option value="0">in 1</option>
+                <option value="1">in 2</option>
+                <option value="2">1+2</option>
+              </select>
+            </div>
+          </div>
+          <div class="power-wrap">
+            <button id="start" class="power" title="switch the board on">
+              <svg viewBox="0 0 16 16"><path d="M8 2v5.5" /><path d="M4.6 4.3a5 5 0 1 0 6.8 0" /></svg>
+            </button>
+            <span id="start-label">power</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="library" id="library" aria-label="library">
+          <div class="lib-tabs" role="tablist">
+            <button type="button" role="tab" data-tab="rigs" id="tab-rigs" class="on" aria-selected="true">rigs</button>
+            <button type="button" role="tab" data-tab="parts" id="tab-parts" aria-selected="false">components</button>
+            <button type="button" class="lib-close" id="lib-close" title="close (Esc)">&times;</button>
+          </div>
+          <input id="lib-search" type="search" placeholder="search…" autocomplete="off" spellcheck="false" aria-label="search the library" />
+          <form id="savebar" class="savebar" hidden>
+            <input id="save-name" type="text" maxlength="40" autocomplete="off" spellcheck="false" placeholder="name your rig" aria-label="rig name" />
+            <button id="save-ok" type="submit" class="chip primary">save</button>
+            <button id="save-cancel" type="button" class="chip">&times;</button>
+            <span id="save-msg" class="msg"></span>
+          </form>
+          <div id="lib-rigs" class="lib-list" role="tabpanel" aria-labelledby="tab-rigs"></div>
+          <div id="lib-parts" class="lib-list" role="tabpanel" aria-labelledby="tab-parts" hidden></div>
+          <p class="lib-hint muted" id="lib-hint" hidden>drag a component into the rack, or click it to add it at the end</p>
+        </aside>
+
+        <section class="rack" aria-label="the rack">
+          <div class="rack-strip">
+            <div class="io-block">
+              <span class="io-label">in</span>
+              <div class="slot" id="in-gain"></div>
+              <div class="meter-col">
+                <div class="meter in" title="input level: keep the peaks inside the green band"><b class="zone" id="in-zone"></b><span id="in-meter"></span><em id="in-hold"></em><i id="in-clip"></i></div>
+                <small class="in-hint" id="in-hint" data-state="idle" aria-live="off">–</small>
+              </div>
+            </div>
+            <div class="slot heat-slot" id="heat"></div>
+            <div class="rack-info">
+              <button type="button" class="chip primary wake" id="wake" title="start the sound (the power button, top right)">⏻ switch on to hear it</button>
+              <button type="button" class="chip" id="doctor-btn" aria-haspopup="true" aria-expanded="false" title="nudge the whole rig: too bright, too dirty, too thin...">tone doctor</button>
+              <button type="button" class="chip" id="open-lib">+ add</button>
+              <span class="count muted" id="rack-count">0 / 8</span>
+            </div>
+            <div class="io-block out">
+              <div class="meter" title="output level"><span id="out-meter"></span><i id="out-clip"></i></div>
+              <span class="io-label">out</span>
+            </div>
+          </div>
+          <div class="rack-body" id="rack-body">
+            <canvas id="spine"></canvas>
+            <div id="units"></div>
+            <div class="drop-line" id="drop-line" hidden></div>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        <div class="hint muted">
+          drag units by <b>⠿</b> to reorder · click the lamp or the socket on the cable to switch · <kbd>1</kbd>–<kbd>8</kbd> footswitches · <kbd>T</kbd> tuner mute · <kbd>←</kbd><kbd>→</kbd> rigs · <kbd>/</kbd> search · drag knobs, <kbd>Shift</kbd> fine, double-click resets
+        </div>
+      </footer>
+    </div>
+
+    <input id="file" type="file" accept="audio/*" hidden />
+    <div id="doctor-pop" class="doctor-pop" role="group" aria-label="tone doctor" hidden>
+      <p>what's wrong with it? each press moves a little, press again for more.</p>
+      <div class="doctor-grid" id="doctor-grid"></div>
+      <button type="button" class="chip" id="doctor-undo" disabled>undo the last one</button>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
