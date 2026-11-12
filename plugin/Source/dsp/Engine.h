@@ -8,6 +8,8 @@
 #include <memory>
 #include "Params.gen.h"
 #include "Blocks.h"
+#include "CabIR.h"
+#include "NamHost.h"
 #include "Mod.h"
 #include "Space.h"
 #include "Tuner.h"
@@ -28,6 +30,8 @@ inline double toNorm(const ParamDef& p, double v) {
 }
 
 constexpr int STAGE_STRIDE = MAX_STAGES + 1;
+/** The guitar's volume pot (a Strat's 250k). */
+constexpr double GUITAR_POT = 250e3;
 
 /** Which circuit of the drive pedal a module runs (0 glow, 1 rasp, 2 fuzz, 3 muff, 4 boost), or -1. */
 inline int driveKind(int m) {
@@ -44,18 +48,27 @@ public:
   int type = M_NONE;
   double fade = 0, level = 1;
   double real[MAX_KNOBS] = {};
+  double norm[MAX_KNOBS] = {};
+  bool gliding = false;
+  double ampOut[2] = { -1, -1 };
+  CabIR cabir[2]; Eq7 eq7[2]; StudioComp comp2[2]; EnvFilter envf[2]; PitchShift pitch[2];
   Gate gate[2]; Comp comp[2]; Drive drive[2]; Amp amp[2]; Cab cab[2]; CabCut cut[2]; Eq eq[2]; Wah wah[2]; Vibe vibe[2]; GuitarTone gtone[2];
   Chorus chorus; Phaser phaser; Flanger flanger; Rotary rotary; Tremolo trem; TapeEcho echo; StereoDelay sdelay; SpringTank spring; Hall hall;
 
   explicit Slot(double fs)
-    : gate { Gate(fs), Gate(fs) }, comp { Comp(fs), Comp(fs) }, drive { Drive(fs), Drive(fs) }, amp { Amp(fs), Amp(fs) },
+    : eq7 { Eq7(fs), Eq7(fs) }, comp2 { StudioComp(fs), StudioComp(fs) }, envf { EnvFilter(fs), EnvFilter(fs) }, pitch { PitchShift(fs), PitchShift(fs) }, gate { Gate(fs), Gate(fs) }, comp { Comp(fs), Comp(fs) }, drive { Drive(fs), Drive(fs) }, amp { Amp(fs), Amp(fs) },
       cab { Cab(fs), Cab(fs) }, cut { CabCut(fs), CabCut(fs) }, eq { Eq(fs), Eq(fs) }, wah { Wah(fs), Wah(fs) }, vibe { Vibe(fs), Vibe(fs) }, gtone { GuitarTone(fs), GuitarTone(fs) }, chorus(fs), phaser(fs), flanger(fs), rotary(fs), trem(fs), echo(fs), sdelay(fs), spring(fs), hall(fs) {}
 
   void reset() {
     for (int c = 0; c < 2; c++) {
-      if (isAmpModule(type)) { amp[c].reset(); cab[c].reset(); cut[c].reset(); continue; }
+      if (isAmpModule(type)) { amp[c].reset(); cab[c].reset(); cut[c].reset(); ampOut[c] = -1; continue; }
       switch (type) {
         case M_GATE: gate[c].reset(); break;
+        case M_CABIR: cabir[c].reset(); break;
+        case M_EQ7: eq7[c].reset(); break;
+        case M_COMP2: comp2[c].reset(); break;
+        case M_ENVFILTER: envf[c].reset(); break;
+        case M_PITCH: pitch[c].reset(); break;
         case M_COMP: comp[c].reset(); break;
         case M_GLOW: case M_RASP: case M_FUZZ: case M_MUFF: case M_BOOST: case M_TRANSPARENT: case M_METAL: case M_OCTAVE: drive[c].reset(); break;
         case M_WAH: wah[c].reset(); break;
@@ -79,7 +92,7 @@ public:
   }
 
   void resetAll() {
-    for (int c = 0; c < 2; c++) { gate[c].reset(); comp[c].reset(); drive[c].reset(); amp[c].reset(); cab[c].reset(); cut[c].reset(); eq[c].reset(); wah[c].reset(); vibe[c].reset(); gtone[c].reset(); }
+    for (int c = 0; c < 2; c++) { cabir[c].reset(); eq7[c].reset(); comp2[c].reset(); envf[c].reset(); pitch[c].reset(); gate[c].reset(); comp[c].reset(); drive[c].reset(); amp[c].reset(); cab[c].reset(); cut[c].reset(); eq[c].reset(); wah[c].reset(); vibe[c].reset(); gtone[c].reset(); }
     chorus.reset(); phaser.reset(); flanger.reset(); rotary.reset(); echo.reset(); sdelay.reset(); spring.reset(); hall.clear();
   }
 };
@@ -88,21 +101,45 @@ class Engine {
 public:
   static constexpr int SCOPE = 512;
   static constexpr double FADE_S = 0.015;
+  static constexpr double KNOB_S = 0.02;
+  static constexpr int KNOB_STEP = 32;
 
   double values[NUM_PARAMS];
   Tuner tuner;
   bool muted = false;
+  /** The input comes from outside (the host's track): scaled by the interface reference into volts. The demo guitar is in volts already. */
+  bool external = false;
 
-  double peakIn = 0, peakL = 0, peakR = 0;
+  /** peakIn in volts (after the interface reference and the input knob); peakRaw the samples as they came. */
+  double peakIn = 0, peakRaw = 0, peakL = 0, peakR = 0;
   float slotPeak[NSLOTS] = {}, slotHeat[NSLOTS] = {}, slotLive[NSLOTS] = {};
+  /** engine.ts slotFaults: resets after a non-finite block, per slot. */
+  unsigned slotFaults[NSLOTS] = {};
+  static constexpr float FAULT_PEAK = 1000;
   float stageHeat[NSLOTS * STAGE_STRIDE] = {};
   float scope[SCOPE] = {};
+
+  /** Message thread: publish the cab IR units' impulse response (nullptr clears it). Old ones are kept until the engine goes, so the audio thread never reads freed memory. */
+  bool setIR(const float* data, int count) {
+    std::unique_ptr<IR> p = data ? prepareIR(data, count) : nullptr;
+    if (data && !p) return false;
+    irp.store(p.get(), std::memory_order_release);
+    if (p) irKeep.push_back(std::move(p));
+    return true;
+  }
+
+  /** Message thread: the NAM unit's model (nullptr clears it). The one it replaces stays alive until the next swap, so the audio thread is never left holding freed memory. */
+  void setNam(std::unique_ptr<NamUnit> u) {
+    namp.store(u.get(), std::memory_order_release);
+    namOld = std::move(namCur);
+    namCur = std::move(u);
+  }
 
   explicit Engine(double sampleRate)
     : tuner(sampleRate), fs(sampleRate), inGain(1, sampleRate, 20), outGain(1, sampleRate, 20) {
     for (int s = 0; s < NSLOTS; s++) slots[s] = std::make_unique<Slot>(sampleRate);
     for (int i = 0; i < NUM_PARAMS; i++) values[i] = PARAMS[i].def;
-    inGain.jump(dbToGain(values[P_INGAIN]));
+    inGain.jump(inputGain());
     outGain.jump(volumeGain());
   }
 
@@ -112,9 +149,9 @@ public:
     values[i] = value < p.min ? p.min : value > p.max ? p.max : value;
   }
 
-  /** A rig: the defaults plus its values; the volume stays where it is. */
+  /** A rig: the defaults plus its values; the volume and the interface reference stay where they are. */
   void loadPreset(const Preset& pr) {
-    for (int i = 0; i < NUM_PARAMS; i++) if (i != P_VOLUME) values[i] = PARAMS[i].def;
+    for (int i = 0; i < NUM_PARAMS; i++) if (!notInRig(i)) values[i] = PARAMS[i].def;
     for (int k = 0; k < pr.count; k++) setParam(pr.values[k].id, pr.values[k].value);
   }
 
@@ -128,10 +165,11 @@ public:
       int want = (int)jsRound(values[base]);
       if (want < 0 || want >= NMODULES) want = M_NONE;
       if (want != slot.type) { slot.type = want; slot.reset(); }
+      jumpKnobs(slot, base);
       slot.fade = want != M_NONE && values[base + 1] >= 0.5 ? 1 : 0;
       slot.level = 1;
     }
-    inGain.jump(dbToGain(values[P_INGAIN]));
+    inGain.jump(inputGain());
     outGain.jump(muted ? 0 : volumeGain());
   }
 
@@ -145,34 +183,39 @@ public:
 
 private:
   double volumeGain() const { const double v = values[P_VOLUME]; return v * v * 2; }
+  double inputGain() const { return dbToGain(values[P_INGAIN] - (external ? values[P_IFACE] : 0)); }
 
   static void copy(const float* from, float* to, int n) { std::copy(from, from + n, to); }
 
   void run(const float* input, float* L, float* R, int n) {
     const double* vals = values;
-    inGain.set(dbToGain(vals[P_INGAIN]));
-    double pin = 0;
+    inGain.set(inputGain());
+    double pin = 0, praw = 0;
     for (int i = 0; i < n; i++) {
-      const double v = input[i] * inGain.tick();
+      const double r = std::abs((double)input[i]); if (r > praw) praw = r;
+      const double v = (input[i] == input[i] ? (double)input[i] : 0.0) * inGain.tick();
       inBuf[i] = (float)v; L[i] = (float)v;
       const double a = std::abs(v); if (a > pin) pin = a;
     }
-    peakIn = pin;
+    peakIn = pin; peakRaw = praw;
     tuner.push(inBuf, n);
 
     const double heatMul = std::pow(2.0, (vals[P_HEAT] - 0.5) * 4);
     bool stereo = false;
     const double fadeStep = n / (FADE_S * fs);
+    // what a fuzz, muff, treble booster or wah sees at its input: the pickup, until a unit that buffers it
+    double srcR = PICKUP_R, srcL = PICKUP_L;
     for (int s = 0; s < NSLOTS; s++) {
       Slot& slot = *slots[s];
       const int base = SLOT_BASE + s * SLOT_STRIDE;
       int want = (int)jsRound(vals[base]);
       if (want < 0 || want >= NMODULES) want = M_NONE;
       const bool on = vals[base + 1] >= 0.5;
+      bool faulted = false;
       if (want != slot.type) {
         if (slot.fade <= 0 || slot.level <= 0) {
           const bool dipped = slot.level <= 0;
-          slot.type = want; slot.reset();
+          slot.type = want; slot.reset(); jumpKnobs(slot, base);
           if (dipped) slot.fade = on && want != M_NONE ? 1 : 0;
         }
       }
@@ -180,8 +223,16 @@ private:
       const int type = slot.type;
       if (settled) {
         const ModuleDef& md = MODULES[type];
-        for (int k = 0; k < md.numKnobs; k++) slot.real[k] = fromNorm(md.knobs[k], vals[base + 2 + k]);
-      }
+        bool g = false;
+        for (int k = 0; k < md.numKnobs; k++) {
+          const double t = vals[base + 2 + k];
+          const Scale sc = md.knobs[k].scale;
+          if (sc == Scale::Enum || sc == Scale::Bool || sc == Scale::Int) slot.norm[k] = t;
+          else if (slot.norm[k] != t) g = true;
+        }
+        slot.gliding = g;
+        if (!g) for (int k = 0; k < md.numKnobs; k++) slot.real[k] = fromNorm(md.knobs[k], slot.norm[k]);
+      } else slot.gliding = false;
       const bool dip = !settled && want != M_NONE;
       const bool fadeIn = settled ? on && type != M_NONE : dip;
       const double f0 = slot.fade;
@@ -196,7 +247,16 @@ private:
         if (MODULES[type].stereo && !stereo) { copy(L, R, n); stereo = true; }
         const bool crossfade = f0 < 1 || f1 < 1;
         if (crossfade) { copy(L, dryL, n); if (stereo) copy(R, dryR, n); }
-        module(s, slot, L, R, n, stereo, heatMul);
+        if (!slot.gliding) module(s, slot, L, R, n, stereo, heatMul, srcR, srcL);
+        else glide(s, slot, base, L, R, n, stereo, heatMul, srcR, srcL);
+        double sum = 0;
+        for (int i = 0; i < n; i++) sum += L[i];
+        if (stereo) for (int i = 0; i < n; i++) sum += R[i];
+        if (!std::isfinite(sum)) { slot.reset(); std::fill(L, L + n, 0.f); if (stereo) std::fill(R, R + n, 0.f); slotFaults[s]++; faulted = true; }
+        if (type == M_GTONE) {
+          const double a = slot.real[1] * slot.real[1];
+          srcR = GUITAR_POT * a * (1 - a) + a * a * PICKUP_R; srcL = a * a * PICKUP_L;
+        } else { srcR = BUFFER_R; srcL = 0; }
         if (crossfade) {
           for (int i = 0; i < n; i++) {
             const double g = f0 + (f1 - f0) * ((double)i / n);
@@ -214,7 +274,7 @@ private:
       }
       double pk = 0;
       for (int i = 0; i < n; i++) { const double a = std::abs((double)L[i]); if (a > pk) pk = a; }
-      slotPeak[s] = (float)pk;
+      slotPeak[s] = faulted ? FAULT_PEAK : (float)pk;
     }
     if (!stereo) copy(L, R, n);
 
@@ -235,7 +295,30 @@ private:
     peakL = pl; peakR = pr;
   }
 
-  void module(int s, Slot& slot, float* L, float* R, int n, bool stereo, double heatMul) {
+  void jumpKnobs(Slot& slot, int base) {
+    const ModuleDef& md = MODULES[slot.type];
+    for (int k = 0; k < md.numKnobs; k++) { slot.norm[k] = values[base + 2 + k]; slot.real[k] = fromNorm(md.knobs[k], slot.norm[k]); }
+    slot.gliding = false;
+  }
+
+  void glide(int s, Slot& slot, int base, float* L, float* R, int n, bool stereo, double heatMul, double srcR, double srcL) {
+    const ModuleDef& md = MODULES[slot.type];
+    for (int o = 0; o < n; o += KNOB_STEP) {
+      const int m = std::min(KNOB_STEP, n - o);
+      const double a = 1 - std::exp(-m / (KNOB_S * fs));
+      for (int k = 0; k < md.numKnobs; k++) {
+        const double t = values[base + 2 + k];
+        double v = slot.norm[k] + (t - slot.norm[k]) * a;
+        if (std::abs(t - v) < 1e-4) v = t;
+        slot.norm[k] = v; slot.real[k] = fromNorm(md.knobs[k], v);
+      }
+      for (int i = 0; i < m; i++) { subL[i] = L[o + i]; if (stereo) subR[i] = R[o + i]; }
+      module(s, slot, subL, subR, m, stereo, heatMul, srcR, srcL);
+      for (int i = 0; i < m; i++) { L[o + i] = subL[i]; if (stereo) R[o + i] = subR[i]; }
+    }
+  }
+
+  void module(int s, Slot& slot, float* L, float* R, int n, bool stereo, double heatMul, double srcR, double srcL) {
     const double* r = slot.real;
     const int chans = stereo ? 2 : 1;
     double heat = 0, live = 0;
@@ -247,9 +330,14 @@ private:
       const int cab = (int)jsRound(r[o + 7]);
       for (int c = 0; c < chans; c++) {
         float* x = c ? R : L;
-        slot.amp[c].process(x, n, voicing, r[o], r[o + 1], r[o + 2], r[o + 3], r[o + 4], r[o + 5], r[o + 6], heatMul);
+        slot.amp[c].process(x, n, voicing, r[o], r[o + 1], r[o + 2], r[o + 3], r[o + 4], r[o + 5], r[o + 6], heatMul, cab - 1);
         if (cab > 0) slot.cab[c].process(x, n, cab - 1, r[o + 8]);
-        if (!legacy) slot.cut[c].process(x, n, r[9], r[10]);
+        if (!legacy) {
+          slot.cut[c].process(x, n, r[9], r[10]);
+          const double g1 = dbToGain(r[11]), g0 = slot.ampOut[c] < 0 ? g1 : slot.ampOut[c];
+          for (int i = 0; i < n; i++) x[i] = (float)(x[i] * (g0 + (g1 - g0) * ((double)i / n)));
+          slot.ampOut[c] = g1;
+        }
       }
       const float* sh = slot.amp[0].stageHeat;
       double h = 0;
@@ -261,6 +349,34 @@ private:
     switch (slot.type) {
       case M_GTONE:
         for (int c = 0; c < chans; c++) slot.gtone[c].process(c ? R : L, n, r[0], r[1]);
+        break;
+      case M_CABIR:
+        for (int c = 0; c < chans; c++) slot.cabir[c].process(c ? R : L, n, irp.load(std::memory_order_acquire), r[0], r[1]);
+        break;
+      case M_EQ7:
+        for (int c = 0; c < chans; c++) { slot.eq7[c].set(r); slot.eq7[c].process(c ? R : L, n, r[7]); }
+        break;
+      case M_ENVFILTER:
+        for (int c = 0; c < chans; c++) slot.envf[c].process(c ? R : L, n, r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7]);
+        live = slot.envf[0].pos; heat = live;
+        break;
+      case M_PITCH:
+        for (int c = 0; c < chans; c++) slot.pitch[c].process(c ? R : L, n, r[0], r[1], r[2], r[3]);
+        live = slot.pitch[0].ratio; heat = r[2];
+        break;
+      case M_COMP2:
+        for (int c = 0; c < chans; c++) slot.comp2[c].process(c ? R : L, n, r[0], r[1], r[2], r[3], r[4], r[5], r[6]);
+        live = slot.comp2[0].reduction; heat = std::min(1.0, live / 18);
+        break;
+      case M_NAM:
+        if (NamUnit* u = namp.load(std::memory_order_acquire)) {
+          // the capture is one mono model: stereo is summed to it and the result goes to both sides.
+          // Volts to digital full scale at the default interface reference (1 V peak at -13 dBFS); a guess for amps that came after a pedal, so the trims are there.
+          const double inG = 0.22387211385683395 * dbToGain(r[0]), outG = dbToGain(r[1]);
+          for (int i = 0; i < n; i++) namIn[i] = (float) ((chans == 2 ? 0.5 * (L[i] + R[i]) : L[i]) * inG);
+          u->process(namIn, namOut, n);
+          for (int i = 0; i < n; i++) { const float y = (float) (namOut[i] * outG); L[i] = y; if (chans == 2) R[i] = y; }
+        }
         break;
       case M_GATE:
         for (int c = 0; c < chans; c++) slot.gate[c].process(c ? R : L, n, r[0], r[1]);
@@ -275,7 +391,7 @@ private:
         for (int c = 0; c < chans; c++) {
           float* x = c ? R : L;
           for (int i = 0; i < n; i++) x[i] = (float)(x[i] * pre);
-          slot.drive[c].process(x, n, driveKind(slot.type), r[0], r[1], r[2]);
+          slot.drive[c].process(x, n, driveKind(slot.type), r[0], r[1], r[2] + 12, srcR, srcL);
         }
         heat = std::min(1.0, std::log2(1 + slot.drive[0].push) / 5); live = slot.drive[0].peakIn;
         break;
@@ -299,7 +415,7 @@ private:
         live = slot.flanger.phase; heat = r[4] * r[1];
         break;
       case M_TREM:
-        slot.trem.process(L, R, n, stereo, r[0], r[1], r[2]);
+        slot.trem.process(L, R, n, stereo, r[0], r[1], r[2], r[3]);
         live = slot.trem.phase; heat = r[1];
         break;
       case M_ECHO:
@@ -315,7 +431,7 @@ private:
         live = slot.spring.level; heat = std::min(1.0, live * 3);
         break;
       case M_HALL:
-        slot.hall.process(L, R, n, r[1], r[0], r[2], r[3], r[4]);
+        slot.hall.process(L, R, n, r[1], r[0], r[2], r[3], r[4], 0.3);
         heat = r[4];
         break;
       case M_PLATE:
@@ -323,7 +439,7 @@ private:
         heat = r[2];
         break;
       case M_ROOM:
-        slot.hall.process(L, R, n, r[0] * 0.3, r[1], r[2], 0, r[3]);
+        slot.hall.process(L, R, n, r[0] * 0.3, r[1], r[2], 0, r[3], 1);
         heat = r[3];
         break;
       case M_VIBE:
@@ -335,7 +451,7 @@ private:
         live = slot.rotary.phase; heat = r[1] * r[2];
         break;
       case M_WAH:
-        for (int c = 0; c < chans; c++) slot.wah[c].process(c ? R : L, n, r[0], r[1], r[2], r[3]);
+        for (int c = 0; c < chans; c++) slot.wah[c].process(c ? R : L, n, r[0], r[1], r[2], r[3], srcR, srcL);
         live = slot.wah[0].pos; heat = r[1];
         break;
       default: break;
@@ -346,7 +462,13 @@ private:
 
   double fs;
   std::unique_ptr<Slot> slots[NSLOTS];
+  std::atomic<const IR*> irp { nullptr };
+  std::atomic<NamUnit*> namp { nullptr };
+  std::unique_ptr<NamUnit> namCur, namOld;
+  float namIn[MAX_BLOCK] = {}, namOut[MAX_BLOCK] = {};
+  std::vector<std::unique_ptr<IR>> irKeep;
   float dryL[MAX_BLOCK] = {}, dryR[MAX_BLOCK] = {}, inBuf[MAX_BLOCK] = {};
+  float subL[KNOB_STEP] = {}, subR[KNOB_STEP] = {};
   Smooth inGain, outGain;
   int scopeIdx = 0;
 };

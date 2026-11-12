@@ -240,38 +240,41 @@ enum : int {
   s16k10,
   s16k11,
   s16k12,
+  iface,
   COUNT
 };
 }
 
 constexpr int NUM_PARAMS = P::COUNT;
-constexpr int NSLOTS = 16, MAX_KNOBS = 12, NMODULES = 44;
+constexpr int NSLOTS = 16, MAX_KNOBS = 12, NMODULES = 50;
 constexpr int SLOT_BASE = 3, SLOT_STRIDE = 14;
-constexpr int P_INGAIN = 0, P_HEAT = 1, P_VOLUME = 2;
-enum : int { M_NONE = 0, M_GATE = 1, M_COMP = 2, M_GLOW = 3, M_RASP = 4, M_FUZZ = 5, M_AMP = 6, M_EQ = 7, M_CHORUS = 8, M_PHASER = 9, M_TREM = 10, M_ECHO = 11, M_SPRING = 12, M_HALL = 13, M_MUFF = 14, M_BOOST = 15, M_AMP2 = 16, M_FLANGER = 17, M_TRANSPARENT = 18, M_METAL = 19, M_AMP3 = 20, M_PLATE = 21, M_ROOM = 22, M_WAH = 23, M_VIBE = 24, M_ROTARY = 25, M_OCTAVE = 26, M_AMP4 = 27, M_GTONE = 28, M_AMP_CLEAN = 29, M_AMP_PLEXI = 30, M_AMP_HOT = 31, M_AMP_CHIME = 32, M_AMP_TWEED = 33, M_AMP_HIWATT = 34, M_AMP_BOUTIQUE = 35, M_AMP_BRIT800 = 36, M_AMP_RECTIFIED = 37, M_AMP_MODERN = 38, M_AMP_BLACKFACE = 39, M_AMP_CHAMP = 40, M_AMP_ORANGE = 41, M_AMP_BROWN = 42, M_SDELAY = 43 };
+constexpr int P_INGAIN = 0, P_HEAT = 1, P_VOLUME = 2, P_IFACE = 227;
+/** Not part of a rig: kept when a rig loads. */
+constexpr bool notInRig(int i) { return i == P_VOLUME || i == P_IFACE; }
+enum : int { M_NONE = 0, M_GATE = 1, M_COMP = 2, M_GLOW = 3, M_RASP = 4, M_FUZZ = 5, M_AMP = 6, M_EQ = 7, M_CHORUS = 8, M_PHASER = 9, M_TREM = 10, M_ECHO = 11, M_SPRING = 12, M_HALL = 13, M_MUFF = 14, M_BOOST = 15, M_AMP2 = 16, M_FLANGER = 17, M_TRANSPARENT = 18, M_METAL = 19, M_AMP3 = 20, M_PLATE = 21, M_ROOM = 22, M_WAH = 23, M_VIBE = 24, M_ROTARY = 25, M_OCTAVE = 26, M_AMP4 = 27, M_GTONE = 28, M_AMP_CLEAN = 29, M_AMP_PLEXI = 30, M_AMP_HOT = 31, M_AMP_CHIME = 32, M_AMP_TWEED = 33, M_AMP_HIWATT = 34, M_AMP_BOUTIQUE = 35, M_AMP_BRIT800 = 36, M_AMP_RECTIFIED = 37, M_AMP_MODERN = 38, M_AMP_BLACKFACE = 39, M_AMP_CHAMP = 40, M_AMP_ORANGE = 41, M_AMP_BROWN = 42, M_SDELAY = 43, M_CABIR = 44, M_NAM = 45, M_EQ7 = 46, M_COMP2 = 47, M_ENVFILTER = 48, M_PITCH = 49 };
 
-inline constexpr const char* LABELS_s1type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s2type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s3type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s4type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s5type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s6type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s7type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s8type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s9type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s10type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s11type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s12type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s13type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s14type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s15type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
-inline constexpr const char* LABELS_s16type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay" };
+inline constexpr const char* LABELS_s1type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s2type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s3type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s4type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s5type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s6type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s7type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s8type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s9type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s10type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s11type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s12type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s13type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s14type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s15type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
+inline constexpr const char* LABELS_s16type[] = { "empty", "gate", "squeeze", "glow", "rasp", "fuzz", "classic amp", "eq", "chorus", "phaser", "tremolo", "tape echo", "spring", "hall", "muff", "boost", "specialty amp", "flanger", "transparent", "metal", "high-gain amp", "plate", "room", "wah", "vibe", "rotary", "octave", "vintage amp", "guitar tone", "clean stack", "plexi", "hot plexi", "chime combo", "tweed combo", "hi-watt", "boutique combo", "brit 800", "rectified", "modern high-gain", "blackface combo", "tweed champ", "orange stack", "brown plexi", "stereo delay", "cab IR", "NAM capture", "7-band eq", "compressor", "envelope filter", "pitch shifter" };
 
 inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "inGain", "input", "rig", -12.0, 24.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
   { "heat", "heat", "rig", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "volume", "volume", "rig", 0.0, 1.0, 0.7, Scale::Lin, nullptr, nullptr, 0 },
-  { "s1type", "module", "slot1", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s1type, 44 },
+  { "s1type", "module", "slot1", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s1type, 50 },
   { "s1on", "on", "slot1", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s1k1", "knob 1", "slot1", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s1k2", "knob 2", "slot1", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -285,7 +288,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s1k10", "knob 10", "slot1", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s1k11", "knob 11", "slot1", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s1k12", "knob 12", "slot1", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s2type", "module", "slot2", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s2type, 44 },
+  { "s2type", "module", "slot2", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s2type, 50 },
   { "s2on", "on", "slot2", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s2k1", "knob 1", "slot2", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s2k2", "knob 2", "slot2", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -299,7 +302,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s2k10", "knob 10", "slot2", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s2k11", "knob 11", "slot2", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s2k12", "knob 12", "slot2", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s3type", "module", "slot3", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s3type, 44 },
+  { "s3type", "module", "slot3", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s3type, 50 },
   { "s3on", "on", "slot3", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s3k1", "knob 1", "slot3", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s3k2", "knob 2", "slot3", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -313,7 +316,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s3k10", "knob 10", "slot3", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s3k11", "knob 11", "slot3", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s3k12", "knob 12", "slot3", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s4type", "module", "slot4", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s4type, 44 },
+  { "s4type", "module", "slot4", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s4type, 50 },
   { "s4on", "on", "slot4", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s4k1", "knob 1", "slot4", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s4k2", "knob 2", "slot4", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -327,7 +330,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s4k10", "knob 10", "slot4", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s4k11", "knob 11", "slot4", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s4k12", "knob 12", "slot4", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s5type", "module", "slot5", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s5type, 44 },
+  { "s5type", "module", "slot5", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s5type, 50 },
   { "s5on", "on", "slot5", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s5k1", "knob 1", "slot5", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s5k2", "knob 2", "slot5", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -341,7 +344,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s5k10", "knob 10", "slot5", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s5k11", "knob 11", "slot5", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s5k12", "knob 12", "slot5", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s6type", "module", "slot6", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s6type, 44 },
+  { "s6type", "module", "slot6", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s6type, 50 },
   { "s6on", "on", "slot6", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s6k1", "knob 1", "slot6", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s6k2", "knob 2", "slot6", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -355,7 +358,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s6k10", "knob 10", "slot6", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s6k11", "knob 11", "slot6", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s6k12", "knob 12", "slot6", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s7type", "module", "slot7", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s7type, 44 },
+  { "s7type", "module", "slot7", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s7type, 50 },
   { "s7on", "on", "slot7", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s7k1", "knob 1", "slot7", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s7k2", "knob 2", "slot7", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -369,7 +372,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s7k10", "knob 10", "slot7", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s7k11", "knob 11", "slot7", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s7k12", "knob 12", "slot7", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s8type", "module", "slot8", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s8type, 44 },
+  { "s8type", "module", "slot8", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s8type, 50 },
   { "s8on", "on", "slot8", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s8k1", "knob 1", "slot8", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s8k2", "knob 2", "slot8", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -383,7 +386,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s8k10", "knob 10", "slot8", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s8k11", "knob 11", "slot8", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s8k12", "knob 12", "slot8", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s9type", "module", "slot9", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s9type, 44 },
+  { "s9type", "module", "slot9", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s9type, 50 },
   { "s9on", "on", "slot9", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s9k1", "knob 1", "slot9", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s9k2", "knob 2", "slot9", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -397,7 +400,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s9k10", "knob 10", "slot9", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s9k11", "knob 11", "slot9", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s9k12", "knob 12", "slot9", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s10type", "module", "slot10", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s10type, 44 },
+  { "s10type", "module", "slot10", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s10type, 50 },
   { "s10on", "on", "slot10", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s10k1", "knob 1", "slot10", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s10k2", "knob 2", "slot10", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -411,7 +414,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s10k10", "knob 10", "slot10", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s10k11", "knob 11", "slot10", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s10k12", "knob 12", "slot10", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s11type", "module", "slot11", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s11type, 44 },
+  { "s11type", "module", "slot11", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s11type, 50 },
   { "s11on", "on", "slot11", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s11k1", "knob 1", "slot11", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s11k2", "knob 2", "slot11", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -425,7 +428,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s11k10", "knob 10", "slot11", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s11k11", "knob 11", "slot11", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s11k12", "knob 12", "slot11", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s12type", "module", "slot12", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s12type, 44 },
+  { "s12type", "module", "slot12", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s12type, 50 },
   { "s12on", "on", "slot12", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s12k1", "knob 1", "slot12", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s12k2", "knob 2", "slot12", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -439,7 +442,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s12k10", "knob 10", "slot12", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s12k11", "knob 11", "slot12", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s12k12", "knob 12", "slot12", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s13type", "module", "slot13", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s13type, 44 },
+  { "s13type", "module", "slot13", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s13type, 50 },
   { "s13on", "on", "slot13", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s13k1", "knob 1", "slot13", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s13k2", "knob 2", "slot13", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -453,7 +456,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s13k10", "knob 10", "slot13", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s13k11", "knob 11", "slot13", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s13k12", "knob 12", "slot13", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s14type", "module", "slot14", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s14type, 44 },
+  { "s14type", "module", "slot14", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s14type, 50 },
   { "s14on", "on", "slot14", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s14k1", "knob 1", "slot14", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s14k2", "knob 2", "slot14", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -467,7 +470,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s14k10", "knob 10", "slot14", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s14k11", "knob 11", "slot14", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s14k12", "knob 12", "slot14", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s15type", "module", "slot15", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s15type, 44 },
+  { "s15type", "module", "slot15", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s15type, 50 },
   { "s15on", "on", "slot15", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s15k1", "knob 1", "slot15", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s15k2", "knob 2", "slot15", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -481,7 +484,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s15k10", "knob 10", "slot15", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s15k11", "knob 11", "slot15", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s15k12", "knob 12", "slot15", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "s16type", "module", "slot16", 0.0, 43.0, 0.0, Scale::Enum, nullptr, LABELS_s16type, 44 },
+  { "s16type", "module", "slot16", 0.0, 49.0, 0.0, Scale::Enum, nullptr, LABELS_s16type, 50 },
   { "s16on", "on", "slot16", 0.0, 1.0, 1.0, Scale::Bool, nullptr, nullptr, 0 },
   { "s16k1", "knob 1", "slot16", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s16k2", "knob 2", "slot16", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
@@ -495,6 +498,7 @@ inline constexpr ParamDef PARAMS[NUM_PARAMS] = {
   { "s16k10", "knob 10", "slot16", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s16k11", "knob 11", "slot16", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "s16k12", "knob 12", "slot16", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
+  { "iface", "interface: 1 V peak reads", "rig", -24.0, 0.0, -13.0, Scale::Lin, "dBFS", nullptr, 0 },
 };
 
 // ---- the module library: what each slot knob means for each module
@@ -515,17 +519,17 @@ inline constexpr ParamDef KNOBS_comp[] = {
 inline constexpr ParamDef KNOBS_glow[] = {
   { "gain", "gain", "glow", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "glow", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "glow", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "glow", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr ParamDef KNOBS_rasp[] = {
   { "gain", "gain", "rasp", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "rasp", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "rasp", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "rasp", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr ParamDef KNOBS_fuzz[] = {
   { "gain", "gain", "fuzz", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "fuzz", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "fuzz", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "fuzz", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_channel[] = { "clean", "crunch", "lead", "chime" };
 inline constexpr const char* KLABELS_amp_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue" };
@@ -564,10 +568,12 @@ inline constexpr ParamDef KNOBS_phaser[] = {
   { "spread", "spread", "phaser", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "mix", "mix", "phaser", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
 };
+inline constexpr const char* KLABELS_trem_type[] = { "optical", "bias", "harmonic" };
 inline constexpr ParamDef KNOBS_trem[] = {
   { "rate", "rate", "trem", 0.5, 12.0, 4.5, Scale::Log, "Hz", nullptr, 0 },
   { "depth", "depth", "trem", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "shape", "shape", "trem", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
+  { "type", "type", "trem", 0.0, 2.0, 1.0, Scale::Enum, nullptr, KLABELS_trem_type, 3 },
 };
 inline constexpr ParamDef KNOBS_echo[] = {
   { "time", "time", "echo", 0.04, 1.2, 0.38, Scale::Log, "s", nullptr, 0 },
@@ -592,12 +598,12 @@ inline constexpr ParamDef KNOBS_hall[] = {
 inline constexpr ParamDef KNOBS_muff[] = {
   { "gain", "sustain", "muff", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "muff", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "muff", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "muff", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr ParamDef KNOBS_boost[] = {
   { "gain", "boost", "boost", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "focus", "boost", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "boost", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "boost", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp2_channel[] = { "tweed", "hi-watt", "boutique" };
 inline constexpr const char* KLABELS_amp2_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed" };
@@ -623,12 +629,12 @@ inline constexpr ParamDef KNOBS_flanger[] = {
 inline constexpr ParamDef KNOBS_transparent[] = {
   { "gain", "drive", "transparent", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "treble", "transparent", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "transparent", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "transparent", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr ParamDef KNOBS_metal[] = {
   { "gain", "gain", "metal", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "metal", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "metal", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "metal", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp3_channel[] = { "brit 800", "rectified", "modern" };
 inline constexpr const char* KLABELS_amp3_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30" };
@@ -675,7 +681,7 @@ inline constexpr ParamDef KNOBS_rotary[] = {
 inline constexpr ParamDef KNOBS_octave[] = {
   { "gain", "fuzz", "octave", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "tone", "tone", "octave", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
-  { "level", "level", "octave", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "octave", -36.0, 0.0, -12.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp4_channel[] = { "blackface", "champ", "orange", "brown" };
 inline constexpr const char* KLABELS_amp4_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
@@ -702,12 +708,13 @@ inline constexpr ParamDef KNOBS_amp_clean[] = {
   { "mid", "middle", "amp_clean", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_clean", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_clean", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_clean", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_clean", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_clean", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_clean", 0.0, 9.0, 2.0, Scale::Enum, nullptr, KLABELS_amp_clean_cab, 10 },
   { "mic", "mic", "amp_clean", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_clean", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_clean", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_clean", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_plexi_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_plexi[] = {
@@ -716,12 +723,13 @@ inline constexpr ParamDef KNOBS_amp_plexi[] = {
   { "mid", "middle", "amp_plexi", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_plexi", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_plexi", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_plexi", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_plexi", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_plexi", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_plexi", 0.0, 9.0, 3.0, Scale::Enum, nullptr, KLABELS_amp_plexi_cab, 10 },
   { "mic", "mic", "amp_plexi", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_plexi", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_plexi", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_plexi", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_hot_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_hot[] = {
@@ -736,6 +744,7 @@ inline constexpr ParamDef KNOBS_amp_hot[] = {
   { "mic", "mic", "amp_hot", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_hot", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_hot", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_hot", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_chime_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_chime[] = {
@@ -744,12 +753,13 @@ inline constexpr ParamDef KNOBS_amp_chime[] = {
   { "mid", "middle", "amp_chime", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_chime", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_chime", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_chime", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_chime", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_chime", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_chime", 0.0, 9.0, 4.0, Scale::Enum, nullptr, KLABELS_amp_chime_cab, 10 },
   { "mic", "mic", "amp_chime", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_chime", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_chime", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_chime", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_tweed_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_tweed[] = {
@@ -758,12 +768,13 @@ inline constexpr ParamDef KNOBS_amp_tweed[] = {
   { "mid", "middle", "amp_tweed", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_tweed", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_tweed", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_tweed", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_tweed", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_tweed", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_tweed", 0.0, 9.0, 6.0, Scale::Enum, nullptr, KLABELS_amp_tweed_cab, 10 },
   { "mic", "mic", "amp_tweed", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_tweed", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_tweed", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_tweed", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_hiwatt_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_hiwatt[] = {
@@ -772,12 +783,13 @@ inline constexpr ParamDef KNOBS_amp_hiwatt[] = {
   { "mid", "middle", "amp_hiwatt", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_hiwatt", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_hiwatt", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_hiwatt", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_hiwatt", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_hiwatt", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_hiwatt", 0.0, 9.0, 3.0, Scale::Enum, nullptr, KLABELS_amp_hiwatt_cab, 10 },
   { "mic", "mic", "amp_hiwatt", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_hiwatt", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_hiwatt", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_hiwatt", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_boutique_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_boutique[] = {
@@ -792,6 +804,7 @@ inline constexpr ParamDef KNOBS_amp_boutique[] = {
   { "mic", "mic", "amp_boutique", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_boutique", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_boutique", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_boutique", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_brit800_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_brit800[] = {
@@ -806,6 +819,7 @@ inline constexpr ParamDef KNOBS_amp_brit800[] = {
   { "mic", "mic", "amp_brit800", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_brit800", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_brit800", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_brit800", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_rectified_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_rectified[] = {
@@ -820,6 +834,7 @@ inline constexpr ParamDef KNOBS_amp_rectified[] = {
   { "mic", "mic", "amp_rectified", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_rectified", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_rectified", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_rectified", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_modern_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_modern[] = {
@@ -834,6 +849,7 @@ inline constexpr ParamDef KNOBS_amp_modern[] = {
   { "mic", "mic", "amp_modern", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_modern", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_modern", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_modern", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_blackface_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_blackface[] = {
@@ -842,12 +858,13 @@ inline constexpr ParamDef KNOBS_amp_blackface[] = {
   { "mid", "middle", "amp_blackface", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_blackface", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_blackface", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_blackface", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_blackface", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_blackface", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_blackface", 0.0, 9.0, 8.0, Scale::Enum, nullptr, KLABELS_amp_blackface_cab, 10 },
   { "mic", "mic", "amp_blackface", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_blackface", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_blackface", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_blackface", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_champ_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_champ[] = {
@@ -856,12 +873,13 @@ inline constexpr ParamDef KNOBS_amp_champ[] = {
   { "mid", "middle", "amp_champ", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_champ", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_champ", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_champ", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_champ", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_champ", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_champ", 0.0, 9.0, 9.0, Scale::Enum, nullptr, KLABELS_amp_champ_cab, 10 },
   { "mic", "mic", "amp_champ", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_champ", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_champ", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_champ", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_orange_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_orange[] = {
@@ -876,6 +894,7 @@ inline constexpr ParamDef KNOBS_amp_orange[] = {
   { "mic", "mic", "amp_orange", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_orange", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_orange", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_orange", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr const char* KLABELS_amp_brown_cab[] = { "off", "1x12 open", "2x12", "4x12", "2x12 blue", "4x12 greenback", "1x12 tweed", "4x12 v30", "4x10 blackface", "1x8 small" };
 inline constexpr ParamDef KNOBS_amp_brown[] = {
@@ -884,12 +903,13 @@ inline constexpr ParamDef KNOBS_amp_brown[] = {
   { "mid", "middle", "amp_brown", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "treble", "treble", "amp_brown", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
   { "presence", "presence", "amp_brown", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
-  { "master", "master", "amp_brown", 0.0, 1.0, 0.4, Scale::Lin, nullptr, nullptr, 0 },
+  { "master", "master", "amp_brown", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
   { "sag", "sag", "amp_brown", 0.0, 1.0, 0.35, Scale::Lin, nullptr, nullptr, 0 },
   { "cab", "cabinet", "amp_brown", 0.0, 9.0, 3.0, Scale::Enum, nullptr, KLABELS_amp_brown_cab, 10 },
   { "mic", "mic", "amp_brown", 0.0, 1.0, 0.3, Scale::Lin, nullptr, nullptr, 0 },
   { "lowcut", "low cut", "amp_brown", 20.0, 300.0, 20.0, Scale::Log, "Hz", nullptr, 0 },
   { "highcut", "high cut", "amp_brown", 2500.0, 12000.0, 12000.0, Scale::Log, "Hz", nullptr, 0 },
+  { "level", "output", "amp_brown", -18.0, 18.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
 };
 inline constexpr ParamDef KNOBS_sdelay[] = {
   { "timeL", "left time", "sdelay", 0.01, 1.5, 0.375, Scale::Log, "s", nullptr, 0 },
@@ -904,6 +924,51 @@ inline constexpr ParamDef KNOBS_sdelay[] = {
   { "mix", "mix", "sdelay", 0.0, 1.0, 0.25, Scale::Lin, nullptr, nullptr, 0 },
   { "drive", "drive", "sdelay", 0.0, 1.0, 0.0, Scale::Lin, nullptr, nullptr, 0 },
 };
+inline constexpr ParamDef KNOBS_cabir[] = {
+  { "level", "level", "cabir", -24.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "mix", "mix", "cabir", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
+};
+inline constexpr ParamDef KNOBS_nam[] = {
+  { "input", "input", "nam", -24.0, 24.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "output", "output", "nam", -24.0, 24.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+};
+inline constexpr ParamDef KNOBS_eq7[] = {
+  { "b100", "100", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b200", "200", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b400", "400", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b800", "800", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b1600", "1.6k", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b3200", "3.2k", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "b6400", "6.4k", "eq7", -15.0, 15.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "level", "level", "eq7", -12.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+};
+inline constexpr ParamDef KNOBS_comp2[] = {
+  { "thr", "threshold", "comp2", -50.0, 0.0, -26.0, Scale::Lin, "dB", nullptr, 0 },
+  { "ratio", "ratio", "comp2", 1.5, 20.0, 4.0, Scale::Log, nullptr, nullptr, 0 },
+  { "attack", "attack", "comp2", 0.001, 0.1, 0.015, Scale::Log, "s", nullptr, 0 },
+  { "release", "release", "comp2", 0.02, 1.5, 0.25, Scale::Log, "s", nullptr, 0 },
+  { "knee", "knee", "comp2", 0.0, 18.0, 6.0, Scale::Lin, "dB", nullptr, 0 },
+  { "makeup", "make-up", "comp2", 0.0, 24.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+  { "mix", "mix", "comp2", 0.0, 1.0, 1.0, Scale::Lin, nullptr, nullptr, 0 },
+};
+inline constexpr const char* KLABELS_envfilter_type[] = { "lowpass", "bandpass", "highpass" };
+inline constexpr const char* KLABELS_envfilter_dir[] = { "up", "down" };
+inline constexpr ParamDef KNOBS_envfilter[] = {
+  { "sens", "sensitivity", "envfilter", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
+  { "freq", "frequency", "envfilter", 60.0, 800.0, 150.0, Scale::Log, "Hz", nullptr, 0 },
+  { "range", "range", "envfilter", 1.0, 6.0, 4.0, Scale::Lin, "oct", nullptr, 0 },
+  { "reson", "resonance", "envfilter", 0.0, 1.0, 0.6, Scale::Lin, nullptr, nullptr, 0 },
+  { "decay", "decay", "envfilter", 0.02, 0.8, 0.15, Scale::Log, "s", nullptr, 0 },
+  { "type", "type", "envfilter", 0.0, 2.0, 1.0, Scale::Enum, nullptr, KLABELS_envfilter_type, 3 },
+  { "dir", "direction", "envfilter", 0.0, 1.0, 0.0, Scale::Enum, nullptr, KLABELS_envfilter_dir, 2 },
+  { "level", "level", "envfilter", -12.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+};
+inline constexpr ParamDef KNOBS_pitch[] = {
+  { "shift", "shift", "pitch", -12.0, 12.0, 12.0, Scale::Int, "st", nullptr, 0 },
+  { "fine", "fine", "pitch", -50.0, 50.0, 0.0, Scale::Lin, "ct", nullptr, 0 },
+  { "mix", "mix", "pitch", 0.0, 1.0, 0.5, Scale::Lin, nullptr, nullptr, 0 },
+  { "level", "level", "pitch", -12.0, 12.0, 0.0, Scale::Lin, "dB", nullptr, 0 },
+};
 
 inline constexpr ModuleDef MODULES[NMODULES] = {
   { "none", "empty", false, nullptr, 0 },
@@ -916,7 +981,7 @@ inline constexpr ModuleDef MODULES[NMODULES] = {
   { "eq", "eq", false, KNOBS_eq, 6 },
   { "chorus", "chorus", true, KNOBS_chorus, 4 },
   { "phaser", "phaser", true, KNOBS_phaser, 6 },
-  { "trem", "tremolo", false, KNOBS_trem, 3 },
+  { "trem", "tremolo", false, KNOBS_trem, 4 },
   { "echo", "tape echo", true, KNOBS_echo, 6 },
   { "spring", "spring", true, KNOBS_spring, 3 },
   { "hall", "hall", true, KNOBS_hall, 5 },
@@ -935,21 +1000,27 @@ inline constexpr ModuleDef MODULES[NMODULES] = {
   { "octave", "octave", false, KNOBS_octave, 3 },
   { "amp4", "vintage amp", false, KNOBS_amp4, 10 },
   { "gtone", "guitar tone", false, KNOBS_gtone, 2 },
-  { "amp_clean", "clean stack", false, KNOBS_amp_clean, 11 },
-  { "amp_plexi", "plexi", false, KNOBS_amp_plexi, 11 },
-  { "amp_hot", "hot plexi", false, KNOBS_amp_hot, 11 },
-  { "amp_chime", "chime combo", false, KNOBS_amp_chime, 11 },
-  { "amp_tweed", "tweed combo", false, KNOBS_amp_tweed, 11 },
-  { "amp_hiwatt", "hi-watt", false, KNOBS_amp_hiwatt, 11 },
-  { "amp_boutique", "boutique combo", false, KNOBS_amp_boutique, 11 },
-  { "amp_brit800", "brit 800", false, KNOBS_amp_brit800, 11 },
-  { "amp_rectified", "rectified", false, KNOBS_amp_rectified, 11 },
-  { "amp_modern", "modern high-gain", false, KNOBS_amp_modern, 11 },
-  { "amp_blackface", "blackface combo", false, KNOBS_amp_blackface, 11 },
-  { "amp_champ", "tweed champ", false, KNOBS_amp_champ, 11 },
-  { "amp_orange", "orange stack", false, KNOBS_amp_orange, 11 },
-  { "amp_brown", "brown plexi", false, KNOBS_amp_brown, 11 },
+  { "amp_clean", "clean stack", false, KNOBS_amp_clean, 12 },
+  { "amp_plexi", "plexi", false, KNOBS_amp_plexi, 12 },
+  { "amp_hot", "hot plexi", false, KNOBS_amp_hot, 12 },
+  { "amp_chime", "chime combo", false, KNOBS_amp_chime, 12 },
+  { "amp_tweed", "tweed combo", false, KNOBS_amp_tweed, 12 },
+  { "amp_hiwatt", "hi-watt", false, KNOBS_amp_hiwatt, 12 },
+  { "amp_boutique", "boutique combo", false, KNOBS_amp_boutique, 12 },
+  { "amp_brit800", "brit 800", false, KNOBS_amp_brit800, 12 },
+  { "amp_rectified", "rectified", false, KNOBS_amp_rectified, 12 },
+  { "amp_modern", "modern high-gain", false, KNOBS_amp_modern, 12 },
+  { "amp_blackface", "blackface combo", false, KNOBS_amp_blackface, 12 },
+  { "amp_champ", "tweed champ", false, KNOBS_amp_champ, 12 },
+  { "amp_orange", "orange stack", false, KNOBS_amp_orange, 12 },
+  { "amp_brown", "brown plexi", false, KNOBS_amp_brown, 12 },
   { "sdelay", "stereo delay", true, KNOBS_sdelay, 11 },
+  { "cabir", "cab IR", false, KNOBS_cabir, 2 },
+  { "nam", "NAM capture", false, KNOBS_nam, 2 },
+  { "eq7", "7-band eq", false, KNOBS_eq7, 8 },
+  { "comp2", "compressor", false, KNOBS_comp2, 7 },
+  { "envfilter", "envelope filter", false, KNOBS_envfilter, 8 },
+  { "pitch", "pitch shifter", false, KNOBS_pitch, 4 },
 };
 
 // ---- the factory rigs, as the parameters that differ from the defaults
@@ -957,95 +1028,119 @@ inline constexpr ModuleDef MODULES[NMODULES] = {
 struct PresetValue { int id; double value; };
 struct Preset { const char* name; const char* tag; const PresetValue* values; int count; };
 
-inline constexpr PresetValue RIG_0[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.38 }, { P::s2k2, 0.45 }, { P::s2k3, 0.55 }, { P::s2k4, 0.62 }, { P::s2k6, 0.3 }, { P::s2k7, 0.2 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.25 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 12.0 }, { P::s3k1, 0.6650895282863459 }, { P::s3k3, 0.24 } };
-inline constexpr PresetValue RIG_1[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.6020599913279623 }, { P::s2k3, 0.5372435736804817 }, { P::s2k5, 0.7 }, { P::s3type, 29.0 }, { P::s3k1, 0.42 }, { P::s3k3, 0.6 }, { P::s3k5, 0.35 }, { P::s3k6, 0.35 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.38826927895855506 }, { P::s4k2, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.16 } };
+inline constexpr PresetValue RIG_0[] = { { P::inGain, 5.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.38 }, { P::s2k2, 0.45 }, { P::s2k3, 0.55 }, { P::s2k4, 0.62 }, { P::s2k6, 0.3 }, { P::s2k7, 0.2 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.25 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 12.0 }, { P::s3k1, 0.6650895282863459 }, { P::s3k3, 0.24 } };
+inline constexpr PresetValue RIG_1[] = { { P::inGain, 7.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.6020599913279623 }, { P::s2k3, 0.5372435736804817 }, { P::s2k5, 0.7 }, { P::s3type, 29.0 }, { P::s3k1, 0.42 }, { P::s3k3, 0.6 }, { P::s3k5, 0.35 }, { P::s3k6, 0.35 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.38826927895855506 }, { P::s4k2, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.16 } };
 inline constexpr PresetValue RIG_2[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 32.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.38 }, { P::s2k3, 0.45 }, { P::s2k4, 0.68 }, { P::s2k5, 0.55 }, { P::s2k6, 0.4 }, { P::s2k7, 0.3 }, { P::s2k8, 0.4444444444444444 }, { P::s2k9, 0.15 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.6204324429167161 }, { P::s3k2, 0.23157894736842105 }, { P::s3k3, 0.6 }, { P::s3k4, 0.3 }, { P::s3k5, 0.18 }, { P::s3k6, 0.0 }, { P::s4type, 12.0 }, { P::s4k1, 0.6332742086579154 }, { P::s4k3, 0.18 } };
-inline constexpr PresetValue RIG_3[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 12.0 }, { P::s2k1, 0.7901652744567114 }, { P::s2k2, 0.65 }, { P::s2k3, 0.42 }, { P::s3type, 29.0 }, { P::s3k1, 0.48 }, { P::s3k2, 0.4 }, { P::s3k3, 0.45 }, { P::s3k4, 0.7 }, { P::s3k5, 0.55 }, { P::s3k6, 0.45 }, { P::s3k7, 0.35 }, { P::s3k8, 0.1111111111111111 }, { P::s3k9, 0.2 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 10.0 }, { P::s4on, 0.0 }, { P::s4k1, 0.7545168838552492 }, { P::s4k2, 0.55 }, { P::s4k3, 0.3 } };
-inline constexpr PresetValue RIG_4[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.55 }, { P::s2k2, 0.62 }, { P::s2k4, 0.3 }, { P::s2k5, 0.15 }, { P::s2k6, 0.3 }, { P::s2k7, 0.35 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.8 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.2922386439811213 }, { P::s3k2, 0.35 }, { P::s3k3, 0.3 }, { P::s3k4, 0.0 }, { P::s3k5, 0.14 } };
+inline constexpr PresetValue RIG_3[] = { { P::inGain, 3.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 12.0 }, { P::s2k1, 0.7901652744567114 }, { P::s2k2, 0.65 }, { P::s2k3, 0.42 }, { P::s3type, 29.0 }, { P::s3k1, 0.48 }, { P::s3k2, 0.4 }, { P::s3k3, 0.45 }, { P::s3k4, 0.7 }, { P::s3k5, 0.55 }, { P::s3k6, 0.45 }, { P::s3k7, 0.35 }, { P::s3k8, 0.1111111111111111 }, { P::s3k9, 0.2 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 10.0 }, { P::s4on, 0.0 }, { P::s4k1, 0.7545168838552492 }, { P::s4k2, 0.55 }, { P::s4k3, 0.3 } };
+inline constexpr PresetValue RIG_4[] = { { P::inGain, 11.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.7 }, { P::s2k2, 0.62 }, { P::s2k4, 0.3 }, { P::s2k5, 0.15 }, { P::s2k6, 0.3 }, { P::s2k7, 0.35 }, { P::s2k8, 0.3333333333333333 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.2922386439811213 }, { P::s3k2, 0.35 }, { P::s3k3, 0.3 }, { P::s3k4, 0.0 }, { P::s3k5, 0.14 } };
 inline constexpr PresetValue RIG_5[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.6 }, { P::s2k2, 0.4515449934959717 }, { P::s2k3, 0.5372435736804817 }, { P::s2k5, 1.0 }, { P::s3type, 29.0 }, { P::s3k1, 0.35 }, { P::s3k2, 0.42 }, { P::s3k3, 0.4 }, { P::s3k4, 0.65 }, { P::s3k5, 0.6 }, { P::s3k6, 0.3 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.2 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 8.0 }, { P::s4k1, 0.6020599913279623 }, { P::s4k2, 0.55 }, { P::s4k3, 0.65 }, { P::s5type, 11.0 }, { P::s5k1, 0.691337488921142 }, { P::s5k2, 0.3157894736842105 }, { P::s5k3, 0.45 }, { P::s5k4, 0.1 }, { P::s5k5, 0.2 }, { P::s5k6, 1.0 }, { P::s6type, 13.0 }, { P::s6k1, 0.5981040045018439 }, { P::s6k2, 0.6 }, { P::s6k4, 0.0 }, { P::s6k5, 0.2 } };
-inline constexpr PresetValue RIG_6[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.7 }, { P::s2k2, 0.30102999566398114 }, { P::s2k3, 0.3667257913420846 }, { P::s2k4, 0.3333333333333333 }, { P::s2k5, 1.0 }, { P::s3type, 29.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.4 }, { P::s3k3, 0.38 }, { P::s3k4, 0.72 }, { P::s3k5, 0.6 }, { P::s3k6, 0.4 }, { P::s3k7, 0.15 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.1 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.3230075074711544 }, { P::s4k2, 0.12631578947368421 }, { P::s4k3, 0.7 }, { P::s4k4, 0.05 }, { P::s4k5, 0.2 }, { P::s4k6, 0.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.6332742086579154 }, { P::s5k3, 0.12 } };
-inline constexpr PresetValue RIG_7[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k2, 0.45 }, { P::s2k4, 0.58 }, { P::s2k5, 0.45 }, { P::s2k6, 0.4 }, { P::s2k7, 0.35 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 10.0 }, { P::s3k1, 0.6696650904796854 }, { P::s3k2, 0.6 }, { P::s3k3, 0.25 }, { P::s4type, 12.0 }, { P::s4k1, 0.7208535517065634 }, { P::s4k3, 0.25 } };
-inline constexpr PresetValue RIG_8[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.78 }, { P::s2k2, 0.45 }, { P::s2k3, 0.6 }, { P::s2k4, 0.55 }, { P::s2k5, 0.45 }, { P::s2k6, 0.62 }, { P::s2k7, 0.55 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.35 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 12.0 }, { P::s3k1, 0.6332742086579154 }, { P::s3k3, 0.15 } };
-inline constexpr PresetValue RIG_9[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.3 }, { P::s2k3, 0.7222222222222222 }, { P::s3type, 29.0 }, { P::s3k2, 0.45 }, { P::s3k3, 0.65 }, { P::s3k5, 0.4 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.4 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 12.0 }, { P::s4k1, 0.5981040045018439 }, { P::s4k3, 0.16 } };
-inline constexpr PresetValue RIG_10[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 30.0 }, { P::s2k1, 0.55 }, { P::s2k3, 0.7 }, { P::s2k4, 0.62 }, { P::s2k6, 0.55 }, { P::s2k7, 0.45 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.34369540505022095 }, { P::s3k2, 0.4 }, { P::s3k4, 0.0 }, { P::s3k5, 0.12 } };
-inline constexpr PresetValue RIG_11[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 4.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.55 }, { P::s2k3, 0.6666666666666666 }, { P::s3type, 30.0 }, { P::s3k1, 0.4 }, { P::s3k2, 0.55 }, { P::s3k3, 0.62 }, { P::s3k4, 0.55 }, { P::s3k5, 0.4 }, { P::s3k7, 0.35 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 } };
-inline constexpr PresetValue RIG_12[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.15 }, { P::s2k2, 0.6 }, { P::s2k3, 0.9166666666666666 }, { P::s3type, 30.0 }, { P::s3k1, 0.48 }, { P::s3k2, 0.45 }, { P::s3k3, 0.75 }, { P::s3k4, 0.6 }, { P::s3k5, 0.55 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.3230075074711544 }, { P::s4k2, 0.10526315789473685 }, { P::s4k3, 0.4 }, { P::s4k4, 0.3 }, { P::s4k5, 0.2 }, { P::s4k6, 0.0 } };
-inline constexpr PresetValue RIG_13[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 32.0 }, { P::s2k1, 0.7 }, { P::s2k2, 0.4 }, { P::s2k4, 0.62 }, { P::s2k5, 0.45 }, { P::s2k6, 0.6 }, { P::s2k8, 0.4444444444444444 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 12.0 }, { P::s3k1, 0.6332742086579154 }, { P::s3k3, 0.14 } };
-inline constexpr PresetValue RIG_14[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.55 }, { P::s2k3, 0.8333333333333334 }, { P::s3type, 30.0 }, { P::s3k1, 0.72 }, { P::s3k2, 0.45 }, { P::s3k3, 0.78 }, { P::s3k4, 0.55 }, { P::s3k6, 0.55 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.691337488921142 }, { P::s4k2, 0.33684210526315794 }, { P::s4k3, 0.45 }, { P::s4k4, 0.3 }, { P::s4k5, 0.22 }, { P::s4k6, 0.0 }, { P::s5type, 13.0 }, { P::s5k1, 0.5236168571408806 }, { P::s5k2, 0.6 }, { P::s5k4, 0.0 }, { P::s5k5, 0.18 } };
-inline constexpr PresetValue RIG_15[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k1, 0.62 }, { P::s2k2, 0.42 }, { P::s2k3, 0.7 }, { P::s2k5, 0.45 }, { P::s2k7, 0.6 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.4 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7305976016521668 }, { P::s3k2, 0.4 }, { P::s3k3, 0.35 }, { P::s3k4, 0.3 }, { P::s3k5, 0.24 }, { P::s3k6, 0.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.5981040045018439 }, { P::s4k2, 0.6 }, { P::s4k4, 0.0 }, { P::s4k5, 0.2 } };
-inline constexpr PresetValue RIG_16[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.55 }, { P::s2k2, 0.4 }, { P::s2k3, 0.75 }, { P::s3type, 30.0 }, { P::s3k1, 0.6 }, { P::s3k3, 0.65 }, { P::s3k4, 0.45 }, { P::s3k5, 0.4 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.55 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.775920075631 }, { P::s4k2, 0.4736842105263158 }, { P::s4k3, 0.45 }, { P::s4k4, 0.55 }, { P::s4k5, 0.28 }, { P::s4k6, 1.0 }, { P::s5type, 13.0 }, { P::s5k1, 0.6941346394792774 }, { P::s5k2, 0.6 }, { P::s5k4, 0.0 }, { P::s5k5, 0.22 } };
-inline constexpr PresetValue RIG_17[] = { { P::s1type, 1.0 }, { P::s1k1, 0.2857142857142857 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k2, 0.35 }, { P::s2k3, 0.6 }, { P::s2k4, 0.38 }, { P::s2k5, 0.3 }, { P::s2k6, 0.45 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.7 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7962049529094938 }, { P::s3k2, 0.5263157894736842 }, { P::s3k3, 0.3 }, { P::s3k4, 0.3 }, { P::s3k5, 0.3 }, { P::s3k6, 0.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.768621786840241 }, { P::s4k2, 0.6 }, { P::s4k4, 0.0 }, { P::s4k5, 0.3 } };
-inline constexpr PresetValue RIG_18[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 9.0 }, { P::s2k1, 0.35304396153878403 }, { P::s2k2, 0.75 }, { P::s2k3, 0.5555555555555556 }, { P::s2k4, 0.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.68 }, { P::s3k2, 0.48 }, { P::s3k3, 0.7 }, { P::s3k4, 0.55 }, { P::s3k6, 0.55 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.6619115405487862 }, { P::s4k2, 0.3157894736842105 }, { P::s4k3, 0.45 }, { P::s4k4, 0.3 }, { P::s4k5, 0.2 }, { P::s4k6, 0.0 } };
-inline constexpr PresetValue RIG_19[] = { { P::s1type, 1.0 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.05 }, { P::s2k2, 0.6 }, { P::s2k3, 0.9444444444444444 }, { P::s3type, 31.0 }, { P::s3k1, 0.72 }, { P::s3k2, 0.6 }, { P::s3k3, 0.45 }, { P::s3k4, 0.6 }, { P::s3k5, 0.55 }, { P::s3k7, 0.3 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 } };
-inline constexpr PresetValue RIG_20[] = { { P::s1type, 1.0 }, { P::s1k1, 0.5714285714285714 }, { P::s1k2, 0.35436764027111584 }, { P::s2type, 3.0 }, { P::s2k1, 0.0 }, { P::s2k2, 0.65 }, { P::s2k3, 1.0 }, { P::s3type, 31.0 }, { P::s3k1, 0.82 }, { P::s3k2, 0.55 }, { P::s3k3, 0.35 }, { P::s3k4, 0.62 }, { P::s3k5, 0.6 }, { P::s3k6, 0.45 }, { P::s3k7, 0.2 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.2 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 7.0 }, { P::s4k2, 0.375 }, { P::s4k4, 0.5833333333333334 } };
-inline constexpr PresetValue RIG_21[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4857142857142857 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 4.0 }, { P::s2k1, 0.45 }, { P::s2k2, 0.45 }, { P::s2k3, 0.6111111111111112 }, { P::s3type, 31.0 }, { P::s3k1, 0.6 }, { P::s3k2, 0.65 }, { P::s3k4, 0.55 }, { P::s3k5, 0.4 }, { P::s3k6, 0.45 }, { P::s3k7, 0.45 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.2922386439811213 }, { P::s4k2, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.1 } };
-inline constexpr PresetValue RIG_22[] = { { P::s1type, 1.0 }, { P::s1k1, 0.45714285714285713 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k1, 0.9 }, { P::s2k2, 0.75 }, { P::s2k3, 0.4 }, { P::s2k4, 0.4 }, { P::s2k5, 0.35 }, { P::s2k6, 0.45 }, { P::s2k7, 0.7 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.6 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.7334515826841693 }, { P::s3k2, 0.6 }, { P::s3k3, 0.3 }, { P::s3k4, 0.0 }, { P::s3k5, 0.2 } };
-inline constexpr PresetValue RIG_23[] = { { P::s1type, 5.0 }, { P::s1k1, 0.6 }, { P::s1k2, 0.55 }, { P::s1k3, 0.3611111111111111 }, { P::s2type, 29.0 }, { P::s2k3, 0.55 }, { P::s2k5, 0.4 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.35 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 } };
-inline constexpr PresetValue RIG_24[] = { { P::s1type, 5.0 }, { P::s1k1, 0.9 }, { P::s1k2, 0.3 }, { P::s1k3, 0.4444444444444444 }, { P::s2type, 30.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.6 }, { P::s2k3, 0.45 }, { P::s2k4, 0.45 }, { P::s2k5, 0.4 }, { P::s2k7, 0.6 }, { P::s2k8, 0.3333333333333333 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.46275642631951835 }, { P::s3k2, 0.6 }, { P::s3k4, 0.0 }, { P::s3k5, 0.14 } };
-inline constexpr PresetValue RIG_25[] = { { P::s1type, 29.0 }, { P::s1k1, 0.35 }, { P::s1k5, 0.4 }, { P::s1k6, 0.4 }, { P::s1k7, 0.35 }, { P::s1k8, 0.0 }, { P::s1k9, 0.3 }, { P::s1k10, 0.0 }, { P::s1k11, 1.0 }, { P::s2type, 5.0 }, { P::s2k1, 1.0 }, { P::s2k2, 0.75 }, { P::s2k3, 0.5833333333333334 }, { P::s3type, 7.0 }, { P::s3k1, 0.3333333333333333 }, { P::s3k3, 0.625 }, { P::s3k5, 0.25 } };
-inline constexpr PresetValue RIG_26[] = { { P::s1type, 5.0 }, { P::s1k1, 0.75 }, { P::s1k3, 0.3888888888888889 }, { P::s2type, 29.0 }, { P::s2k1, 0.45 }, { P::s2k5, 0.4 }, { P::s2k7, 0.35 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.4 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 10.0 }, { P::s3k1, 0.8070817847603028 }, { P::s3k2, 0.7 }, { P::s3k3, 0.8 }, { P::s4type, 12.0 }, { P::s4k1, 0.6332742086579154 }, { P::s4k3, 0.18 } };
-inline constexpr PresetValue RIG_27[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k4, 0.45 }, { P::s2k5, 0.4 }, { P::s2k6, 0.35 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.55 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.8415274268883269 }, { P::s3k2, 0.6526315789473685 }, { P::s3k3, 0.3 }, { P::s3k4, 0.8 }, { P::s3k5, 0.4 }, { P::s3k6, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.829482217661603 }, { P::s4k2, 0.6 }, { P::s4k3, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.38 } };
-inline constexpr PresetValue RIG_28[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.32 }, { P::s2k2, 0.42 }, { P::s2k4, 0.58 }, { P::s2k5, 0.4 }, { P::s2k6, 0.3 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7116223661996359 }, { P::s3k2, 0.4210526315789474 }, { P::s3k3, 0.45 }, { P::s3k4, 0.3 }, { P::s3k5, 0.22 }, { P::s3k6, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.9255128526390367 }, { P::s4k2, 1.0 }, { P::s4k3, 0.55 }, { P::s4k4, 0.35 } };
-inline constexpr PresetValue RIG_29[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.45 }, { P::s2k3, 0.75 }, { P::s3type, 11.0 }, { P::s3k1, 0.5924099058189876 }, { P::s3k2, 0.7368421052631579 }, { P::s3k4, 0.4 }, { P::s3k5, 0.35 }, { P::s3k6, 0.0 }, { P::s4type, 30.0 }, { P::s4k1, 0.35 }, { P::s4k3, 0.6 }, { P::s4k5, 0.4 }, { P::s4k6, 0.45 }, { P::s4k7, 0.35 }, { P::s4k8, 0.2222222222222222 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.7208535517065634 }, { P::s5k3, 0.25 } };
+inline constexpr PresetValue RIG_6[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.7 }, { P::s2k2, 0.30102999566398114 }, { P::s2k3, 0.3667257913420846 }, { P::s2k4, 0.3333333333333333 }, { P::s2k5, 1.0 }, { P::s3type, 29.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.4 }, { P::s3k3, 0.38 }, { P::s3k4, 0.72 }, { P::s3k5, 0.6 }, { P::s3k6, 0.4 }, { P::s3k7, 0.15 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.1 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.3230075074711544 }, { P::s4k2, 0.12631578947368421 }, { P::s4k3, 0.7 }, { P::s4k4, 0.05 }, { P::s4k5, 0.2 }, { P::s4k6, 0.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.6332742086579154 }, { P::s5k3, 0.12 } };
+inline constexpr PresetValue RIG_7[] = { { P::inGain, 7.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k2, 0.45 }, { P::s2k4, 0.58 }, { P::s2k5, 0.45 }, { P::s2k6, 0.4 }, { P::s2k7, 0.35 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 10.0 }, { P::s3k1, 0.6696650904796854 }, { P::s3k2, 0.6 }, { P::s3k3, 0.25 }, { P::s4type, 12.0 }, { P::s4k1, 0.7208535517065634 }, { P::s4k3, 0.25 } };
+inline constexpr PresetValue RIG_8[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.68 }, { P::s2k2, 0.45 }, { P::s2k4, 0.65 }, { P::s2k5, 0.55 }, { P::s2k6, 0.85 }, { P::s2k7, 0.55 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.35 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 7.0 }, { P::s3k6, 0.9166666666666666 }, { P::s4type, 12.0 }, { P::s4k1, 0.6332742086579154 }, { P::s4k3, 0.15 } };
+inline constexpr PresetValue RIG_9[] = { { P::inGain, 6.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.48 }, { P::s2k3, 1.0 }, { P::s3type, 29.0 }, { P::s3k1, 0.29 }, { P::s3k2, 0.45 }, { P::s3k3, 0.45 }, { P::s3k4, 0.6 }, { P::s3k6, 0.6 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.4 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 12.0 }, { P::s4k1, 0.5981040045018439 }, { P::s4k3, 0.16 } };
+inline constexpr PresetValue RIG_10[] = { { P::inGain, 6.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 30.0 }, { P::s2k1, 0.55 }, { P::s2k3, 0.6 }, { P::s2k4, 0.82 }, { P::s2k5, 0.7 }, { P::s2k6, 0.55 }, { P::s2k7, 0.45 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.34369540505022095 }, { P::s3k2, 0.4 }, { P::s3k4, 0.0 }, { P::s3k5, 0.12 } };
+inline constexpr PresetValue RIG_11[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 4.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.55 }, { P::s2k3, 0.875 }, { P::s3type, 30.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.55 }, { P::s3k3, 0.62 }, { P::s3k4, 0.55 }, { P::s3k5, 0.4 }, { P::s3k7, 0.35 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 } };
+inline constexpr PresetValue RIG_12[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.23 }, { P::s2k2, 0.6 }, { P::s2k3, 1.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.47 }, { P::s3k2, 0.45 }, { P::s3k3, 0.75 }, { P::s3k4, 0.8 }, { P::s3k5, 0.65 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.3230075074711544 }, { P::s4k2, 0.10526315789473685 }, { P::s4k3, 0.4 }, { P::s4k4, 0.3 }, { P::s4k5, 0.2 }, { P::s4k6, 0.0 } };
+inline constexpr PresetValue RIG_13[] = { { P::inGain, 6.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 32.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.4 }, { P::s2k3, 0.4 }, { P::s2k4, 0.82 }, { P::s2k5, 0.45 }, { P::s2k6, 0.8 }, { P::s2k8, 0.4444444444444444 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 7.0 }, { P::s3k6, 1.0 }, { P::s4type, 12.0 }, { P::s4k1, 0.6332742086579154 }, { P::s4k3, 0.14 } };
+inline constexpr PresetValue RIG_14[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.54 }, { P::s2k2, 0.55 }, { P::s2k3, 1.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.42 }, { P::s3k2, 0.45 }, { P::s3k3, 0.68 }, { P::s3k4, 0.75 }, { P::s3k6, 0.55 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.691337488921142 }, { P::s4k2, 0.33684210526315794 }, { P::s4k3, 0.45 }, { P::s4k4, 0.3 }, { P::s4k5, 0.22 }, { P::s4k6, 0.0 }, { P::s5type, 13.0 }, { P::s5k1, 0.5236168571408806 }, { P::s5k2, 0.6 }, { P::s5k4, 0.0 }, { P::s5k5, 0.18 } };
+inline constexpr PresetValue RIG_15[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k1, 0.32 }, { P::s2k2, 0.42 }, { P::s2k3, 0.8 }, { P::s2k4, 0.6 }, { P::s2k5, 0.45 }, { P::s2k6, 0.6 }, { P::s2k7, 0.6 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.4 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7305976016521668 }, { P::s3k2, 0.4 }, { P::s3k3, 0.35 }, { P::s3k4, 0.3 }, { P::s3k5, 0.24 }, { P::s3k6, 0.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.5981040045018439 }, { P::s4k2, 0.6 }, { P::s4k4, 0.0 }, { P::s4k5, 0.2 } };
+inline constexpr PresetValue RIG_16[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.73 }, { P::s2k2, 0.4 }, { P::s2k3, 1.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.35 }, { P::s3k3, 0.75 }, { P::s3k4, 0.55 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.55 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 11.0 }, { P::s4k1, 0.775920075631 }, { P::s4k2, 0.4736842105263158 }, { P::s4k3, 0.45 }, { P::s4k4, 0.55 }, { P::s4k5, 0.28 }, { P::s4k6, 1.0 }, { P::s5type, 13.0 }, { P::s5k1, 0.6941346394792774 }, { P::s5k2, 0.6 }, { P::s5k4, 0.0 }, { P::s5k5, 0.22 } };
+inline constexpr PresetValue RIG_17[] = { { P::s1type, 1.0 }, { P::s1k1, 0.2857142857142857 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.35 }, { P::s2k3, 0.6 }, { P::s2k4, 0.48 }, { P::s2k5, 0.4 }, { P::s2k6, 0.65 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.7 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7962049529094938 }, { P::s3k2, 0.5263157894736842 }, { P::s3k3, 0.3 }, { P::s3k4, 0.3 }, { P::s3k5, 0.3 }, { P::s3k6, 0.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.768621786840241 }, { P::s4k2, 0.6 }, { P::s4k4, 0.0 }, { P::s4k5, 0.3 } };
+inline constexpr PresetValue RIG_18[] = { { P::inGain, 6.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 9.0 }, { P::s2k1, 0.35304396153878403 }, { P::s2k2, 0.75 }, { P::s2k3, 0.5555555555555556 }, { P::s2k4, 0.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.9 }, { P::s3k2, 0.48 }, { P::s3k4, 0.75 }, { P::s3k5, 0.7 }, { P::s3k6, 0.65 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 7.0 }, { P::s4k6, 0.7291666666666666 }, { P::s5type, 11.0 }, { P::s5k1, 0.6619115405487862 }, { P::s5k2, 0.3157894736842105 }, { P::s5k3, 0.45 }, { P::s5k4, 0.3 }, { P::s5k5, 0.2 }, { P::s5k6, 0.0 } };
+inline constexpr PresetValue RIG_19[] = { { P::s1type, 1.0 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.04 }, { P::s2k2, 0.6 }, { P::s2k3, 1.0 }, { P::s3type, 31.0 }, { P::s3k1, 0.72 }, { P::s3k2, 0.6 }, { P::s3k3, 0.65 }, { P::s3k5, 0.45 }, { P::s3k7, 0.3 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 } };
+inline constexpr PresetValue RIG_20[] = { { P::s1type, 1.0 }, { P::s1k1, 0.5714285714285714 }, { P::s1k2, 0.35436764027111584 }, { P::s2type, 3.0 }, { P::s2k1, 0.0 }, { P::s2k2, 0.65 }, { P::s2k3, 1.0 }, { P::s3type, 31.0 }, { P::s3k1, 0.76 }, { P::s3k2, 0.55 }, { P::s3k3, 0.55 }, { P::s3k4, 0.82 }, { P::s3k6, 0.55 }, { P::s3k7, 0.2 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.2 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 7.0 }, { P::s4k2, 0.375 }, { P::s4k4, 0.5833333333333334 } };
+inline constexpr PresetValue RIG_21[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4857142857142857 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 4.0 }, { P::s2k1, 0.45 }, { P::s2k2, 0.45 }, { P::s2k3, 0.8333333333333334 }, { P::s3type, 31.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.65 }, { P::s3k3, 0.7 }, { P::s3k4, 0.75 }, { P::s3k6, 0.55 }, { P::s3k7, 0.45 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.45 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.2922386439811213 }, { P::s4k2, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.1 } };
+inline constexpr PresetValue RIG_22[] = { { P::s1type, 1.0 }, { P::s1k1, 0.45714285714285713 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 31.0 }, { P::s2k1, 0.6 }, { P::s2k2, 0.75 }, { P::s2k3, 0.6 }, { P::s2k4, 0.6 }, { P::s2k5, 0.25 }, { P::s2k6, 0.45 }, { P::s2k7, 0.7 }, { P::s2k8, 0.3333333333333333 }, { P::s2k9, 0.6 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.7334515826841693 }, { P::s3k2, 0.6 }, { P::s3k3, 0.3 }, { P::s3k4, 0.0 }, { P::s3k5, 0.2 } };
+inline constexpr PresetValue RIG_23[] = { { P::s1type, 5.0 }, { P::s1k1, 0.6 }, { P::s1k2, 0.55 }, { P::s1k3, 0.25 }, { P::s2type, 29.0 }, { P::s2k1, 0.4 }, { P::s2k3, 0.75 }, { P::s2k4, 0.7 }, { P::s2k5, 0.6 }, { P::s2k6, 0.3 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.35 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 } };
+inline constexpr PresetValue RIG_24[] = { { P::s1type, 5.0 }, { P::s1k1, 0.9 }, { P::s1k2, 0.3 }, { P::s1k3, 0.4166666666666667 }, { P::s2type, 30.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.6 }, { P::s2k3, 0.65 }, { P::s2k4, 0.65 }, { P::s2k5, 0.6 }, { P::s2k6, 0.3 }, { P::s2k7, 0.6 }, { P::s2k8, 0.3333333333333333 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 13.0 }, { P::s3k1, 0.46275642631951835 }, { P::s3k2, 0.6 }, { P::s3k4, 0.0 }, { P::s3k5, 0.14 } };
+inline constexpr PresetValue RIG_25[] = { { P::s1type, 29.0 }, { P::s1k1, 0.15 }, { P::s1k5, 0.4 }, { P::s1k6, 0.4 }, { P::s1k7, 0.35 }, { P::s1k8, 0.0 }, { P::s1k9, 0.3 }, { P::s1k10, 0.0 }, { P::s1k11, 1.0 }, { P::s2type, 5.0 }, { P::s2k1, 1.0 }, { P::s2k2, 0.75 }, { P::s2k3, 0.2777777777777778 }, { P::s3type, 7.0 }, { P::s3k1, 0.3333333333333333 }, { P::s3k3, 0.625 }, { P::s3k5, 0.25 } };
+inline constexpr PresetValue RIG_26[] = { { P::s1type, 5.0 }, { P::s1k1, 0.75 }, { P::s1k3, 0.3611111111111111 }, { P::s2type, 29.0 }, { P::s2k1, 0.3 }, { P::s2k3, 0.7 }, { P::s2k4, 0.7 }, { P::s2k5, 0.6 }, { P::s2k6, 0.6 }, { P::s2k7, 0.35 }, { P::s2k8, 0.1111111111111111 }, { P::s2k9, 0.4 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 10.0 }, { P::s3k1, 0.8070817847603028 }, { P::s3k2, 0.7 }, { P::s3k3, 0.8 }, { P::s4type, 12.0 }, { P::s4k1, 0.6332742086579154 }, { P::s4k3, 0.18 } };
+inline constexpr PresetValue RIG_27[] = { { P::inGain, 11.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k4, 0.45 }, { P::s2k5, 0.4 }, { P::s2k6, 0.35 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.55 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.8415274268883269 }, { P::s3k2, 0.6526315789473685 }, { P::s3k3, 0.3 }, { P::s3k4, 0.8 }, { P::s3k5, 0.4 }, { P::s3k6, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.829482217661603 }, { P::s4k2, 0.6 }, { P::s4k3, 0.4 }, { P::s4k4, 0.0 }, { P::s4k5, 0.38 } };
+inline constexpr PresetValue RIG_28[] = { { P::inGain, 5.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 29.0 }, { P::s2k1, 0.32 }, { P::s2k2, 0.42 }, { P::s2k4, 0.58 }, { P::s2k5, 0.4 }, { P::s2k6, 0.3 }, { P::s2k7, 0.35 }, { P::s2k8, 0.2222222222222222 }, { P::s2k9, 0.3 }, { P::s2k10, 0.0 }, { P::s2k11, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.7116223661996359 }, { P::s3k2, 0.4210526315789474 }, { P::s3k3, 0.45 }, { P::s3k4, 0.3 }, { P::s3k5, 0.22 }, { P::s3k6, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.9255128526390367 }, { P::s4k2, 1.0 }, { P::s4k3, 0.55 }, { P::s4k4, 0.35 } };
+inline constexpr PresetValue RIG_29[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.6 }, { P::s2k2, 0.45 }, { P::s2k3, 1.0 }, { P::s3type, 11.0 }, { P::s3k1, 0.5924099058189876 }, { P::s3k2, 0.7368421052631579 }, { P::s3k4, 0.4 }, { P::s3k5, 0.35 }, { P::s3k6, 0.0 }, { P::s4type, 30.0 }, { P::s4k1, 0.4 }, { P::s4k3, 0.6 }, { P::s4k5, 0.4 }, { P::s4k6, 0.45 }, { P::s4k7, 0.35 }, { P::s4k8, 0.2222222222222222 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.7208535517065634 }, { P::s5k3, 0.25 } };
 inline constexpr PresetValue RIG_30[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.55 }, { P::s2k2, 0.6020599913279623 }, { P::s2k3, 0.5372435736804817 }, { P::s2k4, 0.625 }, { P::s2k5, 1.0 }, { P::s3type, 32.0 }, { P::s3k1, 0.35 }, { P::s3k2, 0.45 }, { P::s3k4, 0.55 }, { P::s3k5, 0.4 }, { P::s3k6, 0.35 }, { P::s3k7, 0.35 }, { P::s3k8, 0.4444444444444444 }, { P::s3k9, 0.4 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 9.0 }, { P::s4k1, 0.17250024712967682 }, { P::s4k2, 0.8 }, { P::s4k3, 0.3333333333333333 }, { P::s4k4, 1.0 }, { P::s4k5, 1.0 }, { P::s5type, 8.0 }, { P::s5k1, 0.3494850021680094 }, { P::s5k2, 0.7 }, { P::s5k4, 0.4 }, { P::s6type, 11.0 }, { P::s6k1, 0.805845623280399 }, { P::s6k2, 0.5263157894736842 }, { P::s6k3, 0.45 }, { P::s6k5, 0.3 }, { P::s6k6, 1.0 }, { P::s7type, 13.0 }, { P::s7k1, 0.8809389787307027 }, { P::s7k2, 0.9 }, { P::s7k5, 0.4 } };
-inline constexpr PresetValue RIG_31[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 11.0 }, { P::s3k1, 0.6769924925288455 }, { P::s3k2, 0.23157894736842105 }, { P::s3k4, 0.15 }, { P::s3k5, 0.3 }, { P::s3k6, 0.0 }, { P::s4type, 3.0 }, { P::s4k1, 0.35 }, { P::s4k2, 0.25 }, { P::s4k3, 0.8055555555555556 }, { P::s5type, 42.0 }, { P::s5k1, 0.42 }, { P::s5k3, 0.55 }, { P::s5k4, 0.3 }, { P::s5k5, 0.2 }, { P::s5k7, 0.6 }, { P::s5k8, 0.3333333333333333 }, { P::s5k9, 0.35 }, { P::s5k10, 0.0 }, { P::s5k11, 1.0 }, { P::s6type, 2.0 }, { P::s6k2, 0.6505149978319905 }, { P::s6k3, 0.5981040045018439 }, { P::s6k5, 0.9 }, { P::s7type, 7.0 }, { P::s7k1, 0.5833333333333334 }, { P::s7k2, 0.6041666666666666 }, { P::s7k3, 0.5416666666666666 }, { P::s7k5, 0.375 }, { P::s8type, 8.0 }, { P::s8k1, 0.47712125471966244 }, { P::s8k2, 0.3 }, { P::s8k3, 0.6 }, { P::s8k4, 0.2 }, { P::s9type, 21.0 }, { P::s9k1, 0.4626069959801623 }, { P::s9k2, 0.55 }, { P::s9k3, 0.12 } };
-inline constexpr PresetValue RIG_32[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.45714285714285713 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.55 }, { P::s3k2, 0.5395906230238123 }, { P::s3k3, 0.5981040045018439 }, { P::s3k4, 0.5833333333333334 }, { P::s3k5, 1.0 }, { P::s4type, 14.0 }, { P::s4k1, 0.4 }, { P::s4k2, 0.45 }, { P::s4k3, 0.3055555555555556 }, { P::s5type, 34.0 }, { P::s5k1, 0.45 }, { P::s5k3, 0.7 }, { P::s5k4, 0.42 }, { P::s5k5, 0.4 }, { P::s5k7, 0.45 }, { P::s5k8, 0.5555555555555556 }, { P::s5k9, 0.4 }, { P::s5k10, 0.0 }, { P::s5k11, 1.0 }, { P::s6type, 7.0 }, { P::s6k2, 0.5833333333333334 }, { P::s6k3, 0.625 }, { P::s6k5, 0.4583333333333333 }, { P::s7type, 17.0 }, { P::s7on, 0.0 }, { P::s7k1, 0.30102999566398114 }, { P::s7k2, 0.6 }, { P::s7k3, 0.4 }, { P::s7k4, 0.5555555555555556 }, { P::s7k5, 0.45 }, { P::s8type, 11.0 }, { P::s8k1, 0.691337488921142 }, { P::s8k2, 0.2947368421052632 }, { P::s8k3, 0.4 }, { P::s8k4, 0.2 }, { P::s8k5, 0.22 }, { P::s8k6, 0.0 }, { P::s9type, 13.0 }, { P::s9k1, 0.6495607655709434 }, { P::s9k2, 0.7 }, { P::s9k3, 0.45 }, { P::s9k4, 0.0 }, { P::s9k5, 0.2 } };
-inline constexpr PresetValue RIG_33[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.42857142857142855 }, { P::s2k2, 0.41140808993222105 }, { P::s3type, 2.0 }, { P::s3k1, 0.6 }, { P::s3k2, 0.690105620855803 }, { P::s3k3, 0.2922386439811213 }, { P::s3k4, 0.3125 }, { P::s3k5, 1.0 }, { P::s4type, 34.0 }, { P::s4k1, 0.36 }, { P::s4k2, 0.4 }, { P::s4k4, 0.45 }, { P::s4k5, 0.4 }, { P::s4k6, 0.45 }, { P::s4k7, 0.2 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 17.0 }, { P::s5on, 0.0 }, { P::s5k1, 0.38907562519182176 }, { P::s5k3, 0.35 }, { P::s5k4, 0.4444444444444445 }, { P::s5k5, 0.4 }, { P::s6type, 13.0 }, { P::s6k1, 0.1568910657987959 }, { P::s6k2, 0.3 }, { P::s6k4, 0.0 }, { P::s6k5, 0.08 } };
-inline constexpr PresetValue RIG_34[] = { { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 18.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.45 }, { P::s3k3, 0.7222222222222222 }, { P::s4type, 33.0 }, { P::s4k1, 0.45 }, { P::s4k3, 0.55 }, { P::s4k4, 0.45 }, { P::s4k5, 0.35 }, { P::s4k7, 0.6 }, { P::s4k8, 0.6666666666666666 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 22.0 }, { P::s5k1, 0.35 }, { P::s5k2, 0.4771212547196623 }, { P::s5k3, 0.45 }, { P::s5k4, 0.16 } };
-inline constexpr PresetValue RIG_35[] = { { P::s1type, 1.0 }, { P::s1k1, 0.5428571428571428 }, { P::s1k2, 0.35436764027111584 }, { P::s2type, 19.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.45 }, { P::s2k3, 0.5555555555555556 }, { P::s3type, 38.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.45 }, { P::s3k3, 0.4 }, { P::s3k4, 0.48 }, { P::s3k5, 0.42 }, { P::s3k7, 0.35 }, { P::s3k8, 0.7777777777777778 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 22.0 }, { P::s4k1, 0.25 }, { P::s4k2, 0.3679767852945944 }, { P::s4k3, 0.45 }, { P::s4k4, 0.1 } };
-inline constexpr PresetValue RIG_36[] = { { P::s1type, 1.0 }, { P::s1k1, 0.42857142857142855 }, { P::s1k2, 0.41140808993222105 }, { P::s2type, 2.0 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.3667257913420846 }, { P::s2k4, 0.4166666666666667 }, { P::s2k5, 1.0 }, { P::s3type, 23.0 }, { P::s3k2, 0.8 }, { P::s3k3, 0.55 }, { P::s4type, 34.0 }, { P::s4k1, 0.4 }, { P::s4k2, 0.4 }, { P::s4k3, 0.55 }, { P::s4k4, 0.55 }, { P::s4k6, 0.45 }, { P::s4k7, 0.2 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 21.0 }, { P::s5k1, 0.2994516925447948 }, { P::s5k2, 0.6 }, { P::s5k3, 0.1 } };
-inline constexpr PresetValue RIG_37[] = { { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 18.0 }, { P::s3k1, 0.2 }, { P::s3k2, 0.45 }, { P::s3k3, 0.75 }, { P::s4type, 36.0 }, { P::s4k1, 0.42 }, { P::s4k2, 0.45 }, { P::s4k3, 0.6 }, { P::s4k4, 0.45 }, { P::s4k5, 0.38 }, { P::s4k7, 0.4 }, { P::s4k8, 0.5555555555555556 }, { P::s4k9, 0.35 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 11.0 }, { P::s5k1, 0.6619115405487862 }, { P::s5k2, 0.2631578947368421 }, { P::s5k3, 0.45 }, { P::s5k4, 0.3 }, { P::s5k5, 0.16 }, { P::s5k6, 0.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.511916049619631 }, { P::s6k2, 0.65 }, { P::s6k3, 0.16 } };
-inline constexpr PresetValue RIG_38[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 18.0 }, { P::s2k1, 0.15 }, { P::s2k3, 0.6666666666666666 }, { P::s3type, 35.0 }, { P::s3k1, 0.35 }, { P::s3k2, 0.4 }, { P::s3k5, 0.4 }, { P::s3k6, 0.4 }, { P::s3k7, 0.35 }, { P::s3k8, 0.5555555555555556 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 17.0 }, { P::s4k1, 0.190105620855803 }, { P::s4k2, 0.7 }, { P::s4k4, 0.6111111111111112 }, { P::s4k5, 0.4 }, { P::s5type, 11.0 }, { P::s5k1, 0.7541312866141433 }, { P::s5k2, 0.5263157894736842 }, { P::s5k3, 0.45 }, { P::s5k4, 0.4 }, { P::s5k5, 0.3 }, { P::s5k6, 1.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.8502741537276026 }, { P::s6k2, 0.6 }, { P::s6k3, 0.35 } };
-inline constexpr PresetValue RIG_39[] = { { P::s1type, 23.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.6 }, { P::s1k3, 0.6 }, { P::s2type, 15.0 }, { P::s2k1, 0.2 }, { P::s2k2, 0.3 }, { P::s2k3, 0.6666666666666666 }, { P::s3type, 14.0 }, { P::s3k1, 0.45 }, { P::s3k3, 0.3055555555555556 }, { P::s4type, 33.0 }, { P::s4k4, 0.4 }, { P::s4k5, 0.4 }, { P::s4k6, 0.55 }, { P::s4k7, 0.55 }, { P::s4k8, 0.6666666666666666 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 22.0 }, { P::s5k2, 0.6020599913279623 }, { P::s5k3, 0.45 }, { P::s5k4, 0.22 } };
-inline constexpr PresetValue RIG_40[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.46275642631951835 }, { P::s2k4, 0.5416666666666666 }, { P::s2k5, 0.7 }, { P::s3type, 39.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.45 }, { P::s3k4, 0.4 }, { P::s3k5, 0.3 }, { P::s3k6, 0.45 }, { P::s3k7, 0.15 }, { P::s3k8, 0.8888888888888888 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 25.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.7 }, { P::s4k3, 0.85 }, { P::s5type, 21.0 }, { P::s5k1, 0.4056838710822128 }, { P::s5k2, 0.65 }, { P::s5k3, 0.14 } };
-inline constexpr PresetValue RIG_41[] = { { P::s1type, 28.0 }, { P::s1k1, 0.65 }, { P::s1k2, 1.0 }, { P::s2type, 26.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.4 }, { P::s2k3, 0.7222222222222222 }, { P::s3type, 42.0 }, { P::s3k1, 0.45 }, { P::s3k3, 0.55 }, { P::s3k4, 0.4 }, { P::s3k5, 0.3 }, { P::s3k7, 0.6 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 24.0 }, { P::s4k1, 0.38447560116320495 }, { P::s4k2, 0.8 }, { P::s4k3, 0.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.6650895282863459 }, { P::s5k3, 0.2 } };
-inline constexpr PresetValue RIG_42[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.5372435736804817 }, { P::s2k4, 0.5416666666666666 }, { P::s2k5, 1.0 }, { P::s3type, 39.0 }, { P::s3k1, 0.4 }, { P::s3k2, 0.45 }, { P::s3k4, 0.4 }, { P::s3k5, 0.3 }, { P::s3k6, 0.45 }, { P::s3k7, 0.15 }, { P::s3k8, 0.8888888888888888 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 43.0 }, { P::s4k1, 0.7233296219436921 }, { P::s4k2, 0.7807439128602033 }, { P::s4k3, 0.3684210526315789 }, { P::s4k4, 0.4210526315789474 }, { P::s4k5, 0.35 }, { P::s4k7, 0.2 }, { P::s4k8, 1.0 }, { P::s4k9, 1.0 }, { P::s4k10, 0.3 }, { P::s4k11, 0.0 }, { P::s5type, 21.0 }, { P::s5k1, 0.6911992163733688 }, { P::s5k2, 0.6 }, { P::s5k3, 0.22 } };
+inline constexpr PresetValue RIG_31[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 11.0 }, { P::s3k1, 0.6769924925288455 }, { P::s3k2, 0.23157894736842105 }, { P::s3k4, 0.15 }, { P::s3k5, 0.3 }, { P::s3k6, 0.0 }, { P::s4type, 3.0 }, { P::s4k1, 0.54 }, { P::s4k2, 0.25 }, { P::s4k3, 1.0 }, { P::s5type, 42.0 }, { P::s5k1, 0.42 }, { P::s5k3, 0.75 }, { P::s5k5, 0.2 }, { P::s5k6, 0.3 }, { P::s5k7, 0.6 }, { P::s5k8, 0.3333333333333333 }, { P::s5k9, 0.35 }, { P::s5k10, 0.0 }, { P::s5k11, 1.0 }, { P::s6type, 2.0 }, { P::s6k2, 0.6505149978319905 }, { P::s6k3, 0.5981040045018439 }, { P::s6k5, 0.9 }, { P::s7type, 7.0 }, { P::s7k1, 0.5833333333333334 }, { P::s7k2, 0.6041666666666666 }, { P::s7k3, 0.5416666666666666 }, { P::s7k5, 0.375 }, { P::s7k6, 0.4166666666666667 }, { P::s8type, 8.0 }, { P::s8k1, 0.47712125471966244 }, { P::s8k2, 0.3 }, { P::s8k3, 0.6 }, { P::s8k4, 0.2 }, { P::s9type, 21.0 }, { P::s9k1, 0.4626069959801623 }, { P::s9k2, 0.55 }, { P::s9k3, 0.12 } };
+inline constexpr PresetValue RIG_32[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.45714285714285713 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.55 }, { P::s3k2, 0.5395906230238123 }, { P::s3k3, 0.5981040045018439 }, { P::s3k4, 0.5833333333333334 }, { P::s3k5, 1.0 }, { P::s4type, 14.0 }, { P::s4k1, 0.4 }, { P::s4k2, 0.38 }, { P::s4k3, 0.7777777777777778 }, { P::s5type, 34.0 }, { P::s5k1, 0.3 }, { P::s5k3, 0.8 }, { P::s5k4, 0.62 }, { P::s5k5, 0.6 }, { P::s5k7, 0.45 }, { P::s5k8, 0.5555555555555556 }, { P::s5k9, 0.4 }, { P::s5k10, 0.0 }, { P::s5k11, 1.0 }, { P::s6type, 7.0 }, { P::s6k2, 0.5833333333333334 }, { P::s6k3, 0.625 }, { P::s6k5, 0.4583333333333333 }, { P::s7type, 17.0 }, { P::s7on, 0.0 }, { P::s7k1, 0.30102999566398114 }, { P::s7k2, 0.6 }, { P::s7k3, 0.4 }, { P::s7k4, 0.5555555555555556 }, { P::s7k5, 0.45 }, { P::s8type, 11.0 }, { P::s8k1, 0.691337488921142 }, { P::s8k2, 0.2947368421052632 }, { P::s8k3, 0.4 }, { P::s8k4, 0.2 }, { P::s8k5, 0.22 }, { P::s8k6, 0.0 }, { P::s9type, 13.0 }, { P::s9k1, 0.6495607655709434 }, { P::s9k2, 0.7 }, { P::s9k3, 0.45 }, { P::s9k4, 0.0 }, { P::s9k5, 0.2 } };
+inline constexpr PresetValue RIG_33[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.42857142857142855 }, { P::s2k2, 0.41140808993222105 }, { P::s3type, 2.0 }, { P::s3k1, 0.6 }, { P::s3k2, 0.690105620855803 }, { P::s3k3, 0.2922386439811213 }, { P::s3k4, 0.4166666666666667 }, { P::s3k5, 1.0 }, { P::s4type, 34.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.4 }, { P::s4k4, 0.45 }, { P::s4k5, 0.4 }, { P::s4k6, 0.45 }, { P::s4k7, 0.2 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 17.0 }, { P::s5on, 0.0 }, { P::s5k1, 0.38907562519182176 }, { P::s5k3, 0.35 }, { P::s5k4, 0.4444444444444445 }, { P::s5k5, 0.4 }, { P::s6type, 13.0 }, { P::s6k1, 0.1568910657987959 }, { P::s6k2, 0.3 }, { P::s6k4, 0.0 }, { P::s6k5, 0.08 } };
+inline constexpr PresetValue RIG_34[] = { { P::inGain, 2.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 18.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.6 }, { P::s3k3, 0.6666666666666666 }, { P::s4type, 33.0 }, { P::s4k1, 0.38 }, { P::s4k3, 0.75 }, { P::s4k4, 0.65 }, { P::s4k5, 0.55 }, { P::s4k6, 0.6 }, { P::s4k7, 0.6 }, { P::s4k8, 0.6666666666666666 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 22.0 }, { P::s5k1, 0.35 }, { P::s5k2, 0.4771212547196623 }, { P::s5k3, 0.45 }, { P::s5k4, 0.16 } };
+inline constexpr PresetValue RIG_35[] = { { P::s1type, 1.0 }, { P::s1k1, 0.5428571428571428 }, { P::s1k2, 0.35436764027111584 }, { P::s2type, 19.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.45 }, { P::s2k3, 0.8055555555555556 }, { P::s3type, 38.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.45 }, { P::s3k3, 0.6 }, { P::s3k4, 0.68 }, { P::s3k5, 0.22 }, { P::s3k6, 0.6 }, { P::s3k7, 0.35 }, { P::s3k8, 0.7777777777777778 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 22.0 }, { P::s4k1, 0.25 }, { P::s4k2, 0.3679767852945944 }, { P::s4k3, 0.45 }, { P::s4k4, 0.1 } };
+inline constexpr PresetValue RIG_36[] = { { P::s1type, 1.0 }, { P::s1k1, 0.42857142857142855 }, { P::s1k2, 0.41140808993222105 }, { P::s2type, 2.0 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.3667257913420846 }, { P::s2k5, 1.0 }, { P::s3type, 23.0 }, { P::s3k2, 0.8 }, { P::s3k3, 0.55 }, { P::s3k4, 0.2916666666666667 }, { P::s4type, 34.0 }, { P::s4k1, 0.4 }, { P::s4k2, 0.4 }, { P::s4k3, 0.55 }, { P::s4k4, 0.55 }, { P::s4k6, 0.45 }, { P::s4k7, 0.2 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 21.0 }, { P::s5k1, 0.2994516925447948 }, { P::s5k2, 0.6 }, { P::s5k3, 0.1 } };
+inline constexpr PresetValue RIG_37[] = { { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 18.0 }, { P::s3k1, 0.2 }, { P::s3k2, 0.6 }, { P::s3k3, 0.7361111111111112 }, { P::s4type, 36.0 }, { P::s4k1, 0.4 }, { P::s4k2, 0.45 }, { P::s4k3, 0.6 }, { P::s4k4, 0.65 }, { P::s4k5, 0.58 }, { P::s4k7, 0.4 }, { P::s4k8, 0.5555555555555556 }, { P::s4k9, 0.35 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 11.0 }, { P::s5k1, 0.6619115405487862 }, { P::s5k2, 0.2631578947368421 }, { P::s5k3, 0.45 }, { P::s5k4, 0.3 }, { P::s5k5, 0.16 }, { P::s5k6, 0.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.511916049619631 }, { P::s6k2, 0.65 }, { P::s6k3, 0.16 } };
+inline constexpr PresetValue RIG_38[] = { { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 18.0 }, { P::s2k1, 0.15 }, { P::s2k3, 0.6111111111111112 }, { P::s3type, 35.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.4 }, { P::s3k5, 0.4 }, { P::s3k6, 0.4 }, { P::s3k7, 0.35 }, { P::s3k8, 0.5555555555555556 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 17.0 }, { P::s4k1, 0.190105620855803 }, { P::s4k2, 0.7 }, { P::s4k4, 0.6111111111111112 }, { P::s4k5, 0.4 }, { P::s5type, 11.0 }, { P::s5k1, 0.7541312866141433 }, { P::s5k2, 0.5263157894736842 }, { P::s5k3, 0.45 }, { P::s5k4, 0.4 }, { P::s5k5, 0.3 }, { P::s5k6, 1.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.8502741537276026 }, { P::s6k2, 0.6 }, { P::s6k3, 0.35 } };
+inline constexpr PresetValue RIG_39[] = { { P::s1type, 23.0 }, { P::s1k1, 0.35 }, { P::s1k2, 0.45 }, { P::s1k3, 0.6 }, { P::s2type, 15.0 }, { P::s2k1, 0.2 }, { P::s2k2, 0.15 }, { P::s2k3, 0.8611111111111112 }, { P::s3type, 14.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.36 }, { P::s3k3, 0.7777777777777778 }, { P::s4type, 33.0 }, { P::s4k3, 0.6 }, { P::s4k6, 0.55 }, { P::s4k7, 0.55 }, { P::s4k8, 0.6666666666666666 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 22.0 }, { P::s5k2, 0.6020599913279623 }, { P::s5k3, 0.45 }, { P::s5k4, 0.22 } };
+inline constexpr PresetValue RIG_40[] = { { P::inGain, 10.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.35 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.46275642631951835 }, { P::s2k4, 0.5416666666666666 }, { P::s2k5, 0.7 }, { P::s3type, 39.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.45 }, { P::s3k4, 0.4 }, { P::s3k5, 0.3 }, { P::s3k6, 0.45 }, { P::s3k7, 0.15 }, { P::s3k8, 0.8888888888888888 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 25.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.7 }, { P::s4k3, 0.85 }, { P::s5type, 21.0 }, { P::s5k1, 0.4056838710822128 }, { P::s5k2, 0.65 }, { P::s5k3, 0.14 } };
+inline constexpr PresetValue RIG_41[] = { { P::s1type, 28.0 }, { P::s1k1, 0.51 }, { P::s1k2, 1.0 }, { P::s2type, 26.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.4 }, { P::s2k3, 1.0 }, { P::s3type, 42.0 }, { P::s3k1, 0.65 }, { P::s3k3, 0.35 }, { P::s3k6, 0.3 }, { P::s3k7, 0.6 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 24.0 }, { P::s4k1, 0.38447560116320495 }, { P::s4k2, 0.8 }, { P::s4k3, 0.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.6650895282863459 }, { P::s5k3, 0.2 } };
+inline constexpr PresetValue RIG_42[] = { { P::inGain, 9.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k1, 0.3 }, { P::s2k2, 0.690105620855803 }, { P::s2k3, 0.5372435736804817 }, { P::s2k4, 0.5416666666666666 }, { P::s2k5, 1.0 }, { P::s3type, 39.0 }, { P::s3k1, 0.4 }, { P::s3k2, 0.45 }, { P::s3k4, 0.4 }, { P::s3k5, 0.3 }, { P::s3k6, 0.45 }, { P::s3k7, 0.15 }, { P::s3k8, 0.8888888888888888 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 43.0 }, { P::s4k1, 0.7233296219436921 }, { P::s4k2, 0.7807439128602033 }, { P::s4k3, 0.3684210526315789 }, { P::s4k4, 0.4210526315789474 }, { P::s4k5, 0.35 }, { P::s4k7, 0.2 }, { P::s4k8, 1.0 }, { P::s4k9, 1.0 }, { P::s4k10, 0.3 }, { P::s4k11, 0.0 }, { P::s5type, 21.0 }, { P::s5k1, 0.6911992163733688 }, { P::s5k2, 0.6 }, { P::s5k3, 0.22 } };
+inline constexpr PresetValue RIG_43[] = { { P::inGain, 6.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.44 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 34.0 }, { P::s3k1, 1.0 }, { P::s3k2, 0.55 }, { P::s3k3, 0.65 }, { P::s3k4, 0.1 }, { P::s3k5, 0.1 }, { P::s3k6, 0.35 }, { P::s3k7, 0.45 }, { P::s3k8, 0.6666666666666666 }, { P::s3k9, 0.3 }, { P::s3k10, 0.511916049619631 }, { P::s3k11, 0.2324616940473614 }, { P::s4type, 43.0 }, { P::s4k1, 0.7233296219436921 }, { P::s4k2, 0.7807439128602033 }, { P::s4k3, 0.3157894736842105 }, { P::s4k4, 0.3157894736842105 }, { P::s4k5, 0.3 }, { P::s4k6, 0.4 }, { P::s4k7, 0.15 }, { P::s4k8, 1.0 }, { P::s4k9, 1.0 }, { P::s4k10, 0.2 }, { P::s4k11, 0.0 }, { P::s5type, 22.0 }, { P::s5k1, 0.4 }, { P::s5k2, 0.5228787452803376 }, { P::s5k3, 0.45 }, { P::s5k4, 0.14 } };
+inline constexpr PresetValue RIG_44[] = { { P::inGain, 1.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.55 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.42857142857142855 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.35 }, { P::s3k2, 0.690105620855803 }, { P::s3k3, 0.5981040045018439 }, { P::s3k5, 1.0 }, { P::s4type, 35.0 }, { P::s4k1, 0.69 }, { P::s4k2, 0.42 }, { P::s4k3, 0.65 }, { P::s4k7, 0.4 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.35 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 11.0 }, { P::s5k1, 0.7180844747609549 }, { P::s5k2, 0.3157894736842105 }, { P::s5k3, 0.4 }, { P::s5k4, 0.15 }, { P::s5k5, 0.2 }, { P::s5k6, 0.0 }, { P::s6type, 13.0 }, { P::s6k1, 0.5981040045018439 }, { P::s6k2, 0.7 }, { P::s6k4, 0.0 }, { P::s6k5, 0.2 } };
+inline constexpr PresetValue RIG_45[] = { { P::inGain, 1.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.61 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.45714285714285713 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 14.0 }, { P::s3k1, 0.55 }, { P::s3k2, 0.38 }, { P::s3k3, 0.7777777777777778 }, { P::s4type, 34.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.42 }, { P::s4k3, 0.6 }, { P::s4k4, 0.55 }, { P::s4k5, 0.45 }, { P::s4k7, 0.3 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 7.0 }, { P::s5k2, 0.5625 }, { P::s5k3, 0.5833333333333334 }, { P::s5k4, 0.5416666666666666 }, { P::s6type, 11.0 }, { P::s6k1, 0.705015029626574 }, { P::s6k2, 0.3684210526315789 }, { P::s6k3, 0.45 }, { P::s6k4, 0.2 }, { P::s6k5, 0.22 }, { P::s6k6, 0.0 }, { P::s7type, 13.0 }, { P::s7k1, 0.6495607655709434 }, { P::s7k2, 0.8 }, { P::s7k4, 0.0 }, { P::s7k5, 0.22 } };
+inline constexpr PresetValue RIG_46[] = { { P::inGain, 1.2 }, { P::s1type, 5.0 }, { P::s1k1, 0.65 }, { P::s1k2, 0.55 }, { P::s1k3, 0.3611111111111111 }, { P::s2type, 28.0 }, { P::s2k1, 0.66 }, { P::s2k2, 1.0 }, { P::s3type, 30.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.42 }, { P::s3k3, 0.65 }, { P::s3k4, 0.7 }, { P::s3k5, 0.55 }, { P::s3k6, 0.78 }, { P::s3k7, 0.45 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 7.0 }, { P::s4k6, 0.8541666666666666 }, { P::s5type, 12.0 }, { P::s5k1, 0.5981040045018439 }, { P::s5k3, 0.14 } };
+inline constexpr PresetValue RIG_47[] = { { P::inGain, 3.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.63 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 3.0 }, { P::s3k1, 0.48 }, { P::s3k2, 0.55 }, { P::s3k3, 0.8888888888888888 }, { P::s4type, 39.0 }, { P::s4k1, 0.45 }, { P::s4k2, 0.42 }, { P::s4k3, 0.55 }, { P::s4k4, 0.55 }, { P::s4k5, 0.4 }, { P::s4k6, 0.55 }, { P::s4k7, 0.4 }, { P::s4k8, 0.8888888888888888 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.6332742086579154 }, { P::s5k3, 0.2 } };
+inline constexpr PresetValue RIG_48[] = { { P::inGain, 6.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4857142857142857 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 9.0 }, { P::s2k1, 0.45369580960607153 }, { P::s2k2, 0.7 }, { P::s2k3, 0.38888888888888884 }, { P::s2k4, 0.0 }, { P::s2k6, 0.4 }, { P::s3type, 42.0 }, { P::s3k1, 0.55 }, { P::s3k2, 0.42 }, { P::s3k3, 0.65 }, { P::s3k4, 0.65 }, { P::s3k6, 0.65 }, { P::s3k8, 0.3333333333333333 }, { P::s3k9, 0.3 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 17.0 }, { P::s4on, 0.0 }, { P::s4k1, 0.30102999566398114 }, { P::s4k2, 0.7 }, { P::s4k3, 0.35 }, { P::s4k4, 0.6111111111111112 }, { P::s4k5, 0.45 }, { P::s5type, 11.0 }, { P::s5k1, 0.6113851412715186 }, { P::s5k2, 0.2947368421052632 }, { P::s5k4, 0.3 }, { P::s5k5, 0.18 }, { P::s5k6, 0.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.5554097173546103 }, { P::s6k2, 0.65 }, { P::s6k3, 0.16 } };
+inline constexpr PresetValue RIG_49[] = { { P::inGain, 1.2 }, { P::s1type, 28.0 }, { P::s1k1, 1.0 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.4 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.35 }, { P::s3k2, 0.6505149978319905 }, { P::s3k3, 0.5372435736804817 }, { P::s3k4, 0.5416666666666666 }, { P::s3k5, 1.0 }, { P::s4type, 32.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.42 }, { P::s4k4, 0.65 }, { P::s4k5, 0.55 }, { P::s4k6, 0.6 }, { P::s4k7, 0.3 }, { P::s4k8, 0.4444444444444444 }, { P::s4k9, 0.2 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 43.0 }, { P::s5k1, 0.7233296219436921 }, { P::s5k2, 0.7807439128602033 }, { P::s5k3, 0.4210526315789474 }, { P::s5k4, 0.3157894736842105 }, { P::s5k5, 0.15 }, { P::s5k6, 0.6 }, { P::s5k7, 0.15 }, { P::s5k8, 1.0 }, { P::s5k9, 1.0 }, { P::s5k10, 0.3 }, { P::s5k11, 0.0 }, { P::s6type, 21.0 }, { P::s6k1, 0.5554097173546103 }, { P::s6k2, 0.65 }, { P::s6k3, 0.12 } };
+inline constexpr PresetValue RIG_50[] = { { P::inGain, 1.2 }, { P::s1type, 28.0 }, { P::s1k1, 0.66 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.37142857142857144 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.45 }, { P::s3k2, 0.690105620855803 }, { P::s3k3, 0.46275642631951835 }, { P::s3k4, 0.5416666666666666 }, { P::s3k5, 1.0 }, { P::s4type, 39.0 }, { P::s4k1, 0.55 }, { P::s4k2, 0.42 }, { P::s4k5, 0.4 }, { P::s4k7, 0.25 }, { P::s4k8, 0.8888888888888888 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.5981040045018439 }, { P::s5k3, 0.14 } };
+inline constexpr PresetValue RIG_51[] = { { P::inGain, 1.0 }, { P::s1type, 28.0 }, { P::s1k1, 0.0 }, { P::s1k2, 1.0 }, { P::s2type, 1.0 }, { P::s2k1, 0.42857142857142855 }, { P::s2k2, 0.5315514604066737 }, { P::s3type, 2.0 }, { P::s3k1, 0.4 }, { P::s3k2, 0.6505149978319905 }, { P::s3k3, 0.5981040045018439 }, { P::s3k5, 1.0 }, { P::s4type, 31.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.42 }, { P::s4k3, 0.75 }, { P::s4k4, 0.7 }, { P::s4k5, 0.6 }, { P::s4k6, 0.6 }, { P::s4k7, 0.4 }, { P::s4k8, 0.3333333333333333 }, { P::s4k9, 0.4 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 }, { P::s5type, 12.0 }, { P::s5k1, 0.5981040045018439 }, { P::s5k3, 0.12 } };
+inline constexpr PresetValue RIG_52[] = { { P::inGain, 4.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.42857142857142855 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 3.0 }, { P::s2k1, 0.48 }, { P::s2k3, 1.0 }, { P::s3type, 36.0 }, { P::s3k1, 0.34 }, { P::s3k3, 0.6 }, { P::s3k6, 0.55 }, { P::s3k7, 0.4 }, { P::s3k8, 0.5555555555555556 }, { P::s3k9, 0.35 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 7.0 }, { P::s4k2, 0.5833333333333334 }, { P::s5type, 11.0 }, { P::s5k1, 0.6619115405487862 }, { P::s5k2, 0.3157894736842105 }, { P::s5k3, 0.45 }, { P::s5k4, 0.15 }, { P::s5k5, 0.2 }, { P::s5k6, 0.0 }, { P::s6type, 13.0 }, { P::s6k1, 0.5236168571408806 }, { P::s6k2, 0.6 }, { P::s6k4, 0.0 }, { P::s6k5, 0.16 } };
+inline constexpr PresetValue RIG_53[] = { { P::inGain, 14.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 2.0 }, { P::s2k2, 0.4515449934959717 }, { P::s2k3, 0.5372435736804817 }, { P::s2k5, 1.0 }, { P::s3type, 48.0 }, { P::s3k2, 0.32710828894029165 }, { P::s3k3, 0.6 }, { P::s3k4, 0.65 }, { P::s3k5, 0.48571917069012305 }, { P::s3k7, 0.0 }, { P::s3k8, 0.8333333333333334 }, { P::s4type, 29.0 }, { P::s4k1, 0.3 }, { P::s4k2, 0.45 }, { P::s4k3, 0.45 }, { P::s4k4, 0.6 }, { P::s4k6, 0.4 }, { P::s4k7, 0.35 }, { P::s4k8, 0.2222222222222222 }, { P::s4k9, 0.3 }, { P::s4k10, 0.0 }, { P::s4k11, 1.0 } };
+inline constexpr PresetValue RIG_54[] = { { P::inGain, 7.0 }, { P::s1type, 1.0 }, { P::s1k1, 0.4 }, { P::s1k2, 0.5315514604066737 }, { P::s2type, 49.0 }, { P::s2k1, 1.0 }, { P::s2k3, 0.4 }, { P::s3type, 29.0 }, { P::s3k1, 0.3 }, { P::s3k2, 0.42 }, { P::s3k3, 0.4 }, { P::s3k4, 0.62 }, { P::s3k5, 0.55 }, { P::s3k6, 0.35 }, { P::s3k7, 0.35 }, { P::s3k8, 0.2222222222222222 }, { P::s3k9, 0.25 }, { P::s3k10, 0.0 }, { P::s3k11, 1.0 }, { P::s4type, 13.0 }, { P::s4k1, 0.5750736182099802 }, { P::s4k2, 0.6 }, { P::s4k4, 0.0 }, { P::s4k5, 0.25 } };
 
-constexpr int NUM_PRESETS = 43;
+constexpr int NUM_PRESETS = 55;
 inline constexpr Preset PRESETS[NUM_PRESETS] = {
-  { "Glass Porch", "clean", RIG_0, 17 },
-  { "Sunday Set", "clean", RIG_1, 23 },
+  { "Glass Porch", "clean", RIG_0, 18 },
+  { "Sunday Set", "clean", RIG_1, 24 },
   { "Chime Line", "clean", RIG_2, 25 },
-  { "Surf Drip", "clean", RIG_3, 24 },
+  { "Surf Drip", "clean", RIG_3, 25 },
   { "Velvet Room", "clean", RIG_4, 20 },
   { "Eighties Wash", "clean", RIG_5, 36 },
   { "Country Snap", "clean", RIG_6, 31 },
-  { "Wobble Porch", "clean", RIG_7, 20 },
-  { "Edge of Breakup", "crunch", RIG_8, 18 },
-  { "Back Room Blues", "crunch", RIG_9, 17 },
-  { "Plexi Afternoon", "crunch", RIG_10, 18 },
+  { "Wobble Porch", "clean", RIG_7, 21 },
+  { "Edge of Breakup", "crunch", RIG_8, 19 },
+  { "Back Room Blues", "crunch", RIG_9, 20 },
+  { "Plexi Afternoon", "crunch", RIG_10, 20 },
   { "Garage Door", "crunch", RIG_11, 18 },
   { "Gaffer Tape", "crunch", RIG_12, 25 },
-  { "Top Boost", "crunch", RIG_13, 16 },
+  { "Top Boost", "crunch", RIG_13, 20 },
   { "Solo Ridge", "lead", RIG_14, 29 },
-  { "Singing Sustain", "lead", RIG_15, 25 },
-  { "Night Drive", "lead", RIG_16, 29 },
-  { "Violin Swell", "lead", RIG_17, 26 },
-  { "Phase Lead", "lead", RIG_18, 25 },
-  { "Riff Engine", "heavy", RIG_19, 17 },
-  { "Tight Chug", "heavy", RIG_20, 22 },
+  { "Singing Sustain", "lead", RIG_15, 27 },
+  { "Night Drive", "lead", RIG_16, 28 },
+  { "Violin Swell", "lead", RIG_17, 27 },
+  { "Phase Lead", "lead", RIG_18, 28 },
+  { "Riff Engine", "heavy", RIG_19, 16 },
+  { "Tight Chug", "heavy", RIG_20, 21 },
   { "Wall of Stacks", "heavy", RIG_21, 23 },
   { "Doom Hall", "heavy", RIG_22, 21 },
-  { "Sputter", "fuzz", RIG_23, 12 },
-  { "Wool Coat", "fuzz", RIG_24, 19 },
+  { "Sputter", "fuzz", RIG_23, 15 },
+  { "Wool Coat", "fuzz", RIG_24, 20 },
   { "Velcro", "fuzz", RIG_25, 17 },
-  { "Fuzz Wobble", "fuzz", RIG_26, 18 },
-  { "Tape Ghosts", "ambient", RIG_27, 25 },
-  { "Cathedral Clean", "ambient", RIG_28, 26 },
+  { "Fuzz Wobble", "fuzz", RIG_26, 21 },
+  { "Tape Ghosts", "ambient", RIG_27, 26 },
+  { "Cathedral Clean", "ambient", RIG_28, 27 },
   { "Wet Wire", "ambient", RIG_29, 26 },
   { "Slow Orbit", "ambient", RIG_30, 40 },
-  { "Copper Kite", "lead", RIG_31, 45 },
+  { "Copper Kite", "lead", RIG_31, 46 },
   { "Slow Ember", "lead", RIG_32, 51 },
   { "Chalk Line", "clean", RIG_33, 35 },
-  { "Brass Rail", "crunch", RIG_34, 25 },
-  { "Iron Orchard", "heavy", RIG_35, 23 },
+  { "Brass Rail", "crunch", RIG_34, 27 },
+  { "Iron Orchard", "heavy", RIG_35, 24 },
   { "Pocket Wah", "clean", RIG_36, 26 },
   { "Slate Roof", "lead", RIG_37, 32 },
   { "Glass Tide", "ambient", RIG_38, 32 },
   { "Dust Bowl", "fuzz", RIG_39, 24 },
-  { "Spin Cycle", "clean", RIG_40, 28 },
-  { "Purple Lens", "fuzz", RIG_41, 24 },
-  { "Two Clocks", "ambient", RIG_42, 35 },
+  { "Spin Cycle", "clean", RIG_40, 29 },
+  { "Purple Lens", "fuzz", RIG_41, 23 },
+  { "Two Clocks", "ambient", RIG_42, 36 },
+  { "Neck Glow", "lead", RIG_43, 36 },
+  { "Amber Sky", "lead", RIG_44, 33 },
+  { "Pewter Hymn", "lead", RIG_45, 38 },
+  { "Violet Smoke", "fuzz", RIG_46, 25 },
+  { "Low Water", "crunch", RIG_47, 26 },
+  { "Bronze Ladder", "lead", RIG_48, 37 },
+  { "Dotted Light", "clean", RIG_49, 40 },
+  { "Soft Gravel", "clean", RIG_50, 25 },
+  { "Rain Voice", "lead", RIG_51, 27 },
+  { "Quicksilver", "lead", RIG_52, 30 },
+  { "Quack Shop", "clean", RIG_53, 26 },
+  { "Twelve Strings", "ambient", RIG_54, 24 },
 };
 
 } // namespace pedalboard

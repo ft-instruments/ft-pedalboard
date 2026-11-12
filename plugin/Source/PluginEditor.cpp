@@ -94,6 +94,21 @@ void PedalboardEditor::send(juce::DynamicObject::Ptr obj) {
   web.emitEventIfBrowserIsVisible("pedalboard", juce::var(obj.get()));
 }
 
+void PedalboardEditor::sendIR() {
+  juce::DynamicObject::Ptr o = new juce::DynamicObject();
+  o->setProperty("type", "ir");
+  o->setProperty("name", proc.irName());
+  send(o);
+}
+
+void PedalboardEditor::sendNAM() {
+  juce::DynamicObject::Ptr o = new juce::DynamicObject();
+  o->setProperty("type", "nam");
+  o->setProperty("name", proc.namName());
+  o->setProperty("error", proc.namError);
+  send(o);
+}
+
 void PedalboardEditor::sendState() {
   for (int i = 0; i < NUM_PARAMS; i++) shown[(size_t)i] = proc.paramValue(i);
   juce::DynamicObject::Ptr o = new juce::DynamicObject();
@@ -107,6 +122,8 @@ void PedalboardEditor::sendState() {
   const auto file = PedalboardProcessor::userRigFile();
   o->setProperty("user", file.existsAsFile() ? juce::JSON::parse(file) : juce::var(juce::Array<juce::var>()));
   send(o);
+  sendIR();
+  sendNAM();
   seenState = proc.stateVersion.load();
 }
 
@@ -146,6 +163,24 @@ void PedalboardEditor::onMessage(const juce::var& msg) {
     proc.inputChannel = juce::jlimit(0, 2, (int)msg["value"]);
   } else if (type == "mute") {
     proc.tunerMute = (bool)msg["value"];
+  } else if (type == "pickIR") {
+    chooser = std::make_unique<juce::FileChooser>("Choose a cabinet impulse response", juce::File(), "*.wav;*.aif;*.aiff;*.flac");
+    juce::Component::SafePointer<PedalboardEditor> self(this);
+    chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [self](const juce::FileChooser& fc) {
+      if (self == nullptr) return;
+      const auto f = fc.getResult();
+      if (f != juce::File()) self->proc.loadIR(f.getFullPathName());
+      self->sendIR();
+    });
+  } else if (type == "pickNAM") {
+    chooser = std::make_unique<juce::FileChooser>("Choose a NAM capture", juce::File(), "*.nam");
+    juce::Component::SafePointer<PedalboardEditor> self(this);
+    chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [self](const juce::FileChooser& fc) {
+      if (self == nullptr) return;
+      const auto f = fc.getResult();
+      if (f != juce::File()) self->proc.loadNAM(f.getFullPathName());
+      self->sendNAM();
+    });
   } else if (type == "saveUser") {
     const auto file = PedalboardProcessor::userRigFile();
     file.getParentDirectory().createDirectory();
@@ -180,6 +215,7 @@ void PedalboardEditor::timerCallback() {
   o->setProperty("type", "stats");
   o->setProperty("load", m.load);
   o->setProperty("peakIn", m.peakIn);
+  o->setProperty("peakRaw", m.peakRaw);
   o->setProperty("peakL", m.peakL);
   o->setProperty("peakR", m.peakR);
   o->setProperty("tunerHz", m.tunerHz);

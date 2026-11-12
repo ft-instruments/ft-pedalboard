@@ -64,7 +64,7 @@ public:
   std::atomic<int> editorW { 0 }, editorH { 0 };
 
   struct Meters {
-    float load = 0, peakIn = 0, peakL = 0, peakR = 0, tunerHz = 0, tunerClarity = 0;
+    float load = 0, peakIn = 0, peakRaw = 0, peakL = 0, peakR = 0, tunerHz = 0, tunerClarity = 0;
     float slotPeak[pedalboard::NSLOTS] {}, slotHeat[pedalboard::NSLOTS] {}, slotLive[pedalboard::NSLOTS] {};
     float stageHeat[pedalboard::NSLOTS * pedalboard::STAGE_STRIDE] {};
   };
@@ -73,8 +73,17 @@ public:
 
   static juce::File userRigFile();
 
+  /** Load a WAV as the cab IR units' impulse response (message thread). Empty path clears it. Returns false if it could not be read. */
+  bool loadIR(const juce::String& path);
+  /** Load a .nam capture for the NAM unit (message thread). Empty path clears it. On failure `namError` says why. */
+  bool loadNAM(const juce::String& path);
+  juce::String namName() const { return namPath.isEmpty() ? juce::String() : juce::File(namPath).getFileNameWithoutExtension(); }
+  juce::String namError;
+  juce::String irName() const { return irPath.isEmpty() ? juce::String() : juce::File(irPath).getFileNameWithoutExtension(); }
+
 private:
   void loadFactory(int index);
+  juce::String irPath, namPath;
 
   std::unique_ptr<pedalboard::Engine> engine;
   std::unique_ptr<pedalboard::DemoGuitar> demo;
@@ -85,6 +94,7 @@ private:
   int currentProgram = 0;
   bool fresh = true;     // the first block after prepare starts without fades
   int lastKind = 0, lastPattern = 0;
+  double powL = 0, powR = 0, wL = 0.5;   // "both inputs": each side's share of the power
 
   juce::CriticalSection nameLock;
   juce::String current;

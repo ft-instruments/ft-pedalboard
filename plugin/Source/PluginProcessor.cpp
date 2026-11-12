@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <juce_audio_formats/juce_audio_formats.h>
 #include <cmath>
 #include <limits>
 
@@ -20,6 +21,7 @@ juce::String format(const ParamDef& p, double v) {
   }
   if (p.scale == Scale::Bool) return v >= 0.5 ? "on" : "off";
   const juce::String unit = p.unit ? utf8(p.unit) : juce::String();
+  if (unit == "dBFS") return juce::String(v, 1) + " dBFS";
   if (unit == "dB") return juce::String(v, std::abs(v) < 10 ? 1 : 0) + " dB";
   // the slot knobs mean something different for every module: show them like the gear does, 0 to 10
   return juce::String(v * 10, 1);
@@ -90,6 +92,45 @@ void PedalboardProcessor::prepareToPlay(double sr, int) {
   demo = std::make_unique<DemoGuitar>(sr);
   pushed.fill(std::numeric_limits<float>::quiet_NaN());   // push every parameter on the next block
   fresh = true;
+  if (irPath.isNotEmpty()) loadIR(irPath);
+  if (namPath.isNotEmpty()) loadNAM(namPath);   // the engine is new: give it the impulse response again
+}
+
+bool PedalboardProcessor::loadNAM(const juce::String& path) {
+  namError = {};
+  if (path.isEmpty()) { namPath = {}; if (engine) engine->setNam(nullptr); stateVersion++; return true; }
+  std::string err;
+  auto unit = pedalboard::loadNam(path.toStdString(), sampleRate, err);
+  if (!unit) { namError = err; return false; }
+  if (engine) engine->setNam(std::move(unit));
+  namPath = path;
+  stateVersion++;
+  return true;
+}
+
+bool PedalboardProcessor::loadIR(const juce::String& path) {
+  if (path.isEmpty()) { irPath = {}; if (engine) engine->setIR(nullptr, 0); stateVersion++; return true; }
+  juce::AudioFormatManager fm;
+  fm.registerBasicFormats();
+  std::unique_ptr<juce::AudioFormatReader> reader(fm.createReaderFor(juce::File(path)));
+  if (!reader || reader->lengthInSamples < 2 || reader->lengthInSamples > 48000 * 10) return false;
+  const int n = (int)reader->lengthInSamples, ch = (int)reader->numChannels;
+  juce::AudioBuffer<float> buf(ch, n);
+  reader->read(&buf, 0, n, 0, true, true);
+  std::vector<float> mono((size_t)n, 0.0f);
+  for (int c = 0; c < ch; c++) for (int i = 0; i < n; i++) mono[(size_t)i] += buf.getSample(c, i) / (float)ch;
+  const double ratio = reader->sampleRate / sampleRate;
+  if (std::abs(ratio - 1.0) > 1e-6) {
+    const int m = (int)std::ceil(n / ratio);
+    std::vector<float> out((size_t)m, 0.0f);
+    juce::LagrangeInterpolator li;
+    li.process(ratio, mono.data(), out.data(), m);
+    mono.swap(out);
+  }
+  if (engine && !engine->setIR(mono.data(), (int)mono.size())) return false;
+  irPath = path;
+  stateVersion++;
+  return true;
 }
 
 bool PedalboardProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
@@ -110,6 +151,8 @@ void PedalboardProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     const float v = raw[(size_t)i]->load(std::memory_order_relaxed);
     if (!(v == pushed[(size_t)i])) { engine->setParam(i, v); pushed[(size_t)i] = v; }
   }
+  // the track is in digital full scale: the engine turns it into volts with the interface reference; the demo is in volts
+  engine->external = sourceKind.load(std::memory_order_relaxed) == 0;
   if (fresh) { engine->snap(); fresh = false; }
   engine->muted = tunerMute.load(std::memory_order_relaxed);
 
@@ -131,7 +174,17 @@ void PedalboardProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     else if (!inL) std::fill(mono, mono + m, 0.f);
     else if (ch == 0) std::copy(inL + off, inL + off + m, mono);
     else if (ch == 1) std::copy(inR + off, inR + off + m, mono);
-    else for (int k = 0; k < m; k++) mono[k] = 0.5f * (inL[off + k] + inR[off + k]);
+    else {
+      // both: averaging would lose 6 dB when only one side carries the guitar, so each side
+      // is weighted by its share of the power (a slow envelope); two identical sides stay as they are
+      double sa = 0, sb = 0;
+      for (int k = 0; k < m; k++) { sa += (double)inL[off + k] * inL[off + k]; sb += (double)inR[off + k] * inR[off + k]; }
+      const double a = 1 - std::exp(-m / (0.1 * sampleRate));
+      powL += (sa / m - powL) * a; powR += (sb / m - powR) * a;
+      const double tot = powL + powR, w1 = tot > 1e-12 ? powL / tot : 0.5, w0 = wL;
+      for (int k = 0; k < m; k++) { const double w = w0 + (w1 - w0) * (k + 1) / m; mono[k] = (float)(inL[off + k] * w + inR[off + k] * (1 - w)); }
+      wL = w1;
+    }
     engine->process(mono, L + off, R ? R + off : outR, m);
     if (!R) for (int k = 0; k < m; k++) L[off + k] = 0.5f * (L[off + k] + outR[k]);
   }
@@ -144,6 +197,7 @@ void PedalboardProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     Meters& mt = meters;
     mt.load = 0.9f * mt.load + 0.1f * (float)(took / (n / sampleRate));
     mt.peakIn = std::max(mt.peakIn, (float)engine->peakIn);
+    mt.peakRaw = std::max(mt.peakRaw, (float)engine->peakRaw);
     mt.peakL = std::max(mt.peakL, (float)engine->peakL);
     mt.peakR = std::max(mt.peakR, (float)engine->peakR);
     mt.tunerHz = (float)engine->tuner.freq; mt.tunerClarity = (float)engine->tuner.clarity;
@@ -159,7 +213,7 @@ void PedalboardProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 PedalboardProcessor::Meters PedalboardProcessor::takeMeters() {
   const juce::SpinLock::ScopedLockType lock(meterLock);
   Meters out = meters;
-  meters.peakIn = meters.peakL = meters.peakR = 0;
+  meters.peakIn = meters.peakRaw = meters.peakL = meters.peakR = 0;
   std::fill(std::begin(meters.slotPeak), std::end(meters.slotPeak), 0.f);
   return out;
 }
@@ -176,7 +230,7 @@ void PedalboardProcessor::setParamFromUi(int i, double value) {
 }
 
 void PedalboardProcessor::loadValues(const std::array<double, NUM_PARAMS>& values, const juce::String& name) {
-  for (int i = 0; i < NUM_PARAMS; i++) if (i != P_VOLUME) setParamFromUi(i, values[(size_t)i]);
+  for (int i = 0; i < NUM_PARAMS; i++) if (!notInRig(i)) setParamFromUi(i, values[(size_t)i]);
   setPresetName(name);
 }
 
@@ -194,7 +248,7 @@ void PedalboardProcessor::loadFactory(int index) {
   const Preset& pr = PRESETS[index];
   for (int k = 0; k < pr.count; k++) v[(size_t)pr.values[k].id] = pr.values[k].value;
   for (int i = 0; i < NUM_PARAMS; i++) {
-    if (i == P_VOLUME) continue;
+    if (notInRig(i)) continue;
     params[(size_t)i]->setValueNotifyingHost(params[(size_t)i]->convertTo0to1((float)v[(size_t)i]));
   }
   currentProgram = index;
@@ -222,6 +276,8 @@ void PedalboardProcessor::getStateInformation(juce::MemoryBlock& destData) {
   state.setProperty("channel", inputChannel.load(), nullptr);
   state.setProperty("editorW", editorW.load(), nullptr);
   state.setProperty("editorH", editorH.load(), nullptr);
+  state.setProperty("irPath", irPath, nullptr);
+  state.setProperty("namPath", namPath, nullptr);
   if (auto xml = state.createXml()) copyXmlToBinary(*xml, destData);
 }
 
@@ -237,6 +293,10 @@ void PedalboardProcessor::setStateInformation(const void* data, int sizeInBytes)
   inputChannel = juce::jlimit(0, 2, (int)state.getProperty("channel", 0));
   editorW = (int)state.getProperty("editorW", 0);
   editorH = (int)state.getProperty("editorH", 0);
+  irPath = state.getProperty("irPath").toString();
+  if (engine) loadIR(irPath);
+  namPath = state.getProperty("namPath").toString();
+  if (engine) loadNAM(namPath);
   stateVersion++;
 }
 

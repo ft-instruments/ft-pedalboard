@@ -21,6 +21,9 @@ private:
   void onMessage(const juce::var& msg);
   void send(juce::DynamicObject::Ptr obj);
   void sendState();
+  void sendIR();
+  void sendNAM();
+  std::unique_ptr<juce::FileChooser> chooser;
   std::optional<juce::WebBrowserComponent::Resource> resource(const juce::String& url);
 
   PedalboardProcessor& proc;

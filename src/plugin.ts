@@ -37,11 +37,17 @@ export interface PluginState {
 type FromPlugin =
   | { type: 'state'; values: ParamValues; preset: string; user: unknown; source: string; channel: number; muted: boolean }
   | { type: 'params'; values: Partial<ParamValues> }
-  | { type: 'stats'; load: number; peakIn: number; peakL: number; peakR: number; tunerHz: number; tunerClarity: number;
+  | { type: 'ir'; name: string }
+  | { type: 'nam'; name: string; error?: string }
+  | { type: 'stats'; load: number; peakIn: number; peakRaw?: number; peakL: number; peakR: number; tunerHz: number; tunerClarity: number;
       slotPeak: number[]; slotHeat: number[]; slotLive: number[]; stageHeat: number[] };
 
 export class PluginBoard {
   public onStats: ((s: WorkletStats) => void) | null = null;
+  /** The plugin loaded (or restored) a cab IR; '' for none. */
+  /** The plugin loaded (or restored, or failed to load) a NAM capture. */
+  public onNAM: ((name: string, error: string) => void) | null = null;
+  public onIR: ((name: string) => void) | null = null;
   public onState: ((s: PluginState) => void) | null = null;
   /** Parameters the host moved (automation, its own editor). */
   public onParams: ((values: Partial<ParamValues>) => void) | null = null;
@@ -78,6 +84,9 @@ export class PluginBoard {
   async openInput(_deviceId?: string | null): Promise<string> { return 'host input'; }
   closeInput(): void { /* nothing to close */ }
   async inputDevices(): Promise<InputDevice[]> { return []; }
+  /** The plugin opens its own file chooser; the name comes back as an 'ir' message. */
+  pickIR(): void { this.send({ type: 'pickIR' }); }
+  pickNAM(): void { this.send({ type: 'pickNAM' }); }
   async loadFile(_file?: File): Promise<number> { throw new Error('files play in the browser version only'); }
 
   private send(payload: Record<string, unknown>): void { backend()?.emitEvent(CHANNEL, payload); }
@@ -92,9 +101,11 @@ export class PluginBoard {
         break;
       }
       case 'params': this.onParams?.(m.values); break;
+      case 'ir': this.onIR?.(m.name); break;
+      case 'nam': this.onNAM?.(m.name, m.error ?? ''); break;
       case 'stats':
         this.onStats?.({
-          type: 'stats', load: m.load, peakIn: m.peakIn, peakL: m.peakL, peakR: m.peakR,
+          type: 'stats', load: m.load, peakIn: m.peakIn, peakRaw: m.peakRaw ?? 0, peakL: m.peakL, peakR: m.peakR,
           tunerHz: m.tunerHz, tunerClarity: m.tunerClarity,
           slotPeak: Float32Array.from(m.slotPeak), slotHeat: Float32Array.from(m.slotHeat),
           slotLive: Float32Array.from(m.slotLive), stageHeat: Float32Array.from(m.stageHeat),

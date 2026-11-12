@@ -73,8 +73,35 @@ endif()
 file(GLOB_RECURSE PEDALBOARD_UI_FILES CONFIGURE_DEPENDS "${PEDALBOARD_UI_DIR}/*")
 juce_add_binary_data(PedalboardUI SOURCES ${PEDALBOARD_UI_FILES})
 
+# NAM (Neural Amp Modeler) core: C++20, so it is its own library and the plugin only sees dsp/NamHost.h.
+# Found in FT_NAM_DIR or ~/SDKs/NeuralAmpModelerCore, else fetched at a pinned commit (as CI does).
+set(_nam_dir "$ENV{FT_NAM_DIR}")
+if(NOT _nam_dir)
+  set(_nam_dir "$ENV{HOME}/SDKs/NeuralAmpModelerCore")
+endif()
+if(NOT EXISTS "${_nam_dir}/NAM/get_dsp.h")
+  include(FetchContent)
+  FetchContent_Declare(namcore_src
+    GIT_REPOSITORY https://github.com/sdatkinson/NeuralAmpModelerCore.git
+    GIT_TAG d3189ed482ded880c128bf312941266c4fa5ceec
+    GIT_SUBMODULES_RECURSE TRUE)
+  FetchContent_GetProperties(namcore_src)
+  if(NOT namcore_src_POPULATED)
+    FetchContent_Populate(namcore_src)
+  endif()
+  set(_nam_dir "${namcore_src_SOURCE_DIR}")
+endif()
+file(GLOB_RECURSE _nam_sources CONFIGURE_DEPENDS "${_nam_dir}/NAM/*.cpp")
+# OBJECT, not STATIC: the model types register themselves from static initialisers, which a static archive would drop
+add_library(pedalboard_nam OBJECT ${_nam_sources} Source/NamHost.cpp)
+target_compile_features(pedalboard_nam PUBLIC cxx_std_20)
+target_include_directories(pedalboard_nam PRIVATE
+  "${_nam_dir}" "${_nam_dir}/Dependencies/eigen" "${_nam_dir}/Dependencies/nlohmann" Source)
+set_target_properties(pedalboard_nam PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_link_libraries(Pedalboard
   PRIVATE
+    pedalboard_nam
     PedalboardUI
     juce::juce_audio_utils
     juce::juce_gui_extra
