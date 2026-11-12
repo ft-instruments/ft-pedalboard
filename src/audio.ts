@@ -90,6 +90,19 @@ export class Board {
     return buf.duration;
   }
 
+  /** Decode a WAV as the cab IR units' impulse response (mono, at the context's rate); returns its length in ms. */
+  async loadIR(file: File): Promise<number> {
+    if (!this.ctx) throw new Error('start the board first');
+    const buf = await this.ctx.decodeAudioData(await file.arrayBuffer());
+    const mono = new Float32Array(buf.length);
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < d.length; i++) mono[i] += d[i] / buf.numberOfChannels;
+    }
+    this.send({ type: 'ir', data: mono }, [mono.buffer]);
+    return buf.duration * 1000;
+  }
+
   private send(m: WorkletMessage, transfer: Transferable[] = []): void { this.node?.port.postMessage(m, transfer); }
 
   setParam(id: string, value: number): void { this.send({ type: 'param', id, value }); }

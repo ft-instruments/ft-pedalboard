@@ -9,6 +9,7 @@ export type WorkletMessage =
   | { type: 'rig'; values: Record<string, number> }
   | { type: 'source'; kind: number; pattern: number }
   | { type: 'file'; data: Float32Array }
+  | { type: 'ir'; data: Float32Array | null }
   | { type: 'channel'; value: number }      // 0 left / input 1, 1 right / input 2, 2 both
   | { type: 'mute'; value: boolean }
   | { type: 'reset' };
@@ -18,7 +19,8 @@ export type WorkletMessage =
 export interface WorkletStats {
   type: 'stats';
   load: number;          // fraction of the block period spent in process()
-  peakIn: number;
+  peakIn: number;        // volts at the rack's input
+  peakRaw: number;       // the input samples, 1 = digital full scale (clipping)
   peakL: number;
   peakR: number;
   slotPeak: Float32Array;

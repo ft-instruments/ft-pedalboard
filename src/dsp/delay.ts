@@ -1,9 +1,21 @@
-// Tape echo: the repeats go through a head-bump low shelf, a low-pass and a
-// soft-saturating record stage, the tape wobbles (slow wow + fast flutter),
-// and time changes slew so turning the knob bends the pitch like a motor
-// changing speed. Ping-pong sends the repeats back and forth.
+// Tape echo: the repeats go through a low-pass, a high-pass and a
+// soft-saturating record stage, the tape wobbles, and time changes slew so
+// turning the knob bends the pitch like a motor changing speed. Ping-pong
+// sends the repeats back and forth.
+//
+// As on a real machine the record amplifier pre-emphasises the treble (+6
+// dB above ~2.5 kHz) before the tape saturates and the playback
+// de-emphasises it again (the exact inverse), so loud repeats lose their
+// top first and darken and soften as they pile up, while quiet ones stay
+// clean. The wobble is a slow wow, a 6.3 Hz flutter and a random drift
+// (low-passed noise, 3 Hz) so it never sounds like a sine LFO (after
+// Chowdhury, "Real-time physical modelling for analog tape machines", DAFx
+// 2019, and Arnardottir, Abel & Smith on the Echoplex, AES 2008).
 
-import { tanhf, readDelay } from './util.ts';
+import { tanhf, readDelayCubic, Rng } from './util.ts';
+
+/** Record pre-emphasis: +6 dB (k = 1) above its corner. */
+const EMPH_K = 1, EMPH_HZ = 2500, DRIFT_HZ = 3;
 
 const MAX_SECONDS = 1.45;
 
@@ -15,6 +27,8 @@ export class TapeEcho {
   private wowPh = 0; private flutPh = 0;
   private lpL = 0; private lpR = 0;
   private hpL = 0; private hpR = 0;
+  private prL = 0; private prR = 0; private deL = 0; private deR = 0;   // the emphasis filters' low-pass states
+  private drift = 0; private rng = new Rng();
   private readonly fs: number;
   /** For the UI: the loop's level. */
   level = 0;
@@ -27,7 +41,18 @@ export class TapeEcho {
     this.time = sampleRate * 0.38;
   }
 
-  reset(): void { this.bufL.fill(0); this.bufR.fill(0); this.lpL = this.lpR = this.hpL = this.hpR = 0; this.level = 0; }
+  reset(): void { this.bufL.fill(0); this.bufR.fill(0); this.lpL = this.lpR = this.hpL = this.hpR = 0; this.prL = this.prR = this.deL = this.deR = 0; this.level = 0; }
+
+  /** The record head: pre-emphasis, the tape's saturation, and the playback's de-emphasis (solved exactly). */
+  private tape(w: number, left: boolean, ea: number): number {
+    let pr = left ? this.prL : this.prR, de = left ? this.deL : this.deR;
+    pr += (w - pr) * ea;
+    const s = tanhf((1 + EMPH_K) * w - EMPH_K * pr);
+    const y = (s + EMPH_K * (1 - ea) * de) / (1 + EMPH_K * (1 - ea));
+    de += (y - de) * ea;
+    if (left) { this.prL = pr; this.deL = de; } else { this.prR = pr; this.deR = de; }
+    return y;
+  }
 
   /** In place, stereo. */
   process(L: Float32Array, R: Float32Array, n: number, seconds: number, feedback: number, tone: number, wow: number, mix: number, pingPong: boolean): void {
@@ -41,33 +66,37 @@ export class TapeEcho {
     const wowInc = 2 * Math.PI * 0.55 / fs, flutInc = 2 * Math.PI * 6.3 / fs;
     const wowDepth = wow * 2.2e-3 * fs, flutDepth = wow * 0.18e-3 * fs;
     const fb = feedback, wet = mix, dry = 1 - mix * 0.5;
-    let time = this.time, wp = this.wowPh, fp = this.flutPh;
+    const ea = 1 - Math.exp(-2 * Math.PI * EMPH_HZ / fs);
+    const da = 1 - Math.exp(-2 * Math.PI * DRIFT_HZ / fs), dn = wow * 0.8e-3 * fs / Math.sqrt(da / (3 * (2 - da)));
+    let time = this.time, wp = this.wowPh, fp = this.flutPh, drift = this.drift;
+    const rng = this.rng;
     let lpL = this.lpL, lpR = this.lpR, hpL = this.hpL, hpR = this.hpR, peak = 0;
     for (let i = 0; i < n; i++) {
       time += (target - time) * slew;
       wp += wowInc; if (wp > 6.283185307) wp -= 6.283185307;
       fp += flutInc; if (fp > 6.283185307) fp -= 6.283185307;
-      const d = time + (1 + Math.sin(wp)) * wowDepth + Math.sin(fp) * flutDepth;
-      let rl = readDelay(bufL, idx, d);
-      let rr = readDelay(bufR, idx, d + 0.6e-3 * fs);
+      drift += (rng.bi() - drift) * da;
+      const d = time + (1 + Math.sin(wp)) * wowDepth + Math.sin(fp) * flutDepth + (1 + drift) * dn * 0.5;
+      let rl = readDelayCubic(bufL, idx, d);
+      let rr = readDelayCubic(bufR, idx, d + 0.6e-3 * fs);
       lpL += (rl - lpL) * lpA; lpR += (rr - lpR) * lpA;
       hpL += (lpL - hpL) * hpA; hpR += (lpR - hpR) * hpA;
       rl = lpL - hpL; rr = lpR - hpR;
       const xl = L[i], xr = R[i];
       // the record head saturates what goes onto the tape, repeats included
       if (pingPong) {
-        bufL[idx] = tanhf((xl + xr) * 0.5 + rr * fb);
-        bufR[idx] = tanhf(rl * fb);
+        bufL[idx] = this.tape((xl + xr) * 0.5 + rr * fb, true, ea);
+        bufR[idx] = this.tape(rl * fb, false, ea);
       } else {
-        bufL[idx] = tanhf(xl + rl * fb);
-        bufR[idx] = tanhf(xr + rr * fb);
+        bufL[idx] = this.tape(xl + rl * fb, true, ea);
+        bufR[idx] = this.tape(xr + rr * fb, false, ea);
       }
       const a = Math.abs(rl) + Math.abs(rr); if (a > peak) peak = a;
       L[i] = xl * dry + rl * wet;
       R[i] = xr * dry + rr * wet;
       if (++idx >= len) idx = 0;
     }
-    this.idx = idx; this.time = time; this.wowPh = wp; this.flutPh = fp;
+    this.idx = idx; this.time = time; this.wowPh = wp; this.flutPh = fp; this.drift = drift;
     this.lpL = lpL; this.lpR = lpR; this.hpL = hpL; this.hpR = hpR;
     this.level = peak * 0.5;
   }
@@ -124,8 +153,8 @@ export class StereoDelay {
       tl += (targetL - tl) * slew; tr += (targetR - tr) * slew;
       p1 += inc1; if (p1 > 6.283185307) p1 -= 6.283185307;
       p2 += inc2; if (p2 > 6.283185307) p2 -= 6.283185307;
-      let rl = readDelay(bufL, idx, tl + Math.sin(p1) * depth + depth);
-      let rr = readDelay(bufR, idx, tr + Math.sin(p2) * depth + depth);
+      let rl = readDelayCubic(bufL, idx, tl + Math.sin(p1) * depth + depth);
+      let rr = readDelayCubic(bufR, idx, tr + Math.sin(p2) * depth + depth);
       lpL += (rl - lpL) * lpA; lpR += (rr - lpR) * lpA;
       hpL += (lpL - hpL) * hpA; hpR += (lpR - hpR) * hpA;
       rl = lpL - hpL; rr = lpR - hpR;

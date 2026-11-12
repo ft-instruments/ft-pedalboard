@@ -47,3 +47,44 @@ export class Eq {
     return m;
   }
 }
+
+// Seven-band graphic equaliser: octave-spaced bells from 100 Hz to 6.4 kHz
+// (a guitar graphic's bands), fixed Q, ±15 dB each, and an output level.
+
+export const EQ7_BANDS = 7;
+export const EQ7_FREQ = [100, 200, 400, 800, 1600, 3200, 6400];
+const Q7 = 1.4;
+
+export class Eq7 {
+  readonly bands: Biquad[] = [];
+  private gains = new Float64Array(EQ7_BANDS);
+  private readonly fs: number;
+
+  constructor(sampleRate: number) {
+    this.fs = sampleRate;
+    for (let b = 0; b < EQ7_BANDS; b++) { this.bands.push(new Biquad()); this.gains[b] = NaN; }
+  }
+
+  reset(): void { for (const b of this.bands) b.reset(); }
+
+  /** Band gains in dB, low to high: the first seven values of `g`. */
+  set(g: ArrayLike<number>): void {
+    for (let b = 0; b < EQ7_BANDS; b++) {
+      if (g[b] === this.gains[b]) continue;
+      this.gains[b] = g[b];
+      this.bands[b].peak(this.fs, EQ7_FREQ[b], Q7, g[b]);
+    }
+  }
+
+  process(x: Float32Array, n: number, levelDb: number): void {
+    const out = dbToGain(levelDb), b = this.bands;
+    for (let i = 0; i < n; i++) x[i] = b[6].tick(b[5].tick(b[4].tick(b[3].tick(b[2].tick(b[1].tick(b[0].tick(x[i]))))))) * out;
+  }
+
+  /** |H| at `f` Hz, for the picture. */
+  mag(f: number): number {
+    let m = 1;
+    for (const b of this.bands) m *= b.mag(this.fs, f);
+    return m;
+  }
+}

@@ -19,7 +19,9 @@ class PedalboardProcessor extends AudioWorkletProcessor {
   private blockCount = 0;
   private busy = 0;
   private samples = 0;
-  private peakIn = 0; private peakL = 0; private peakR = 0;
+  private peakIn = 0; private peakRaw = 0; private peakL = 0; private peakR = 0;
+  /** "Both inputs": each side's weight follows its share of the power (a slow envelope), so a guitar on one side keeps its full level and two identical sides stay as they are. */
+  private powL = 0; private powR = 0; private wL = 0.5;
   private slotPeak = new Float32Array(NSLOTS);
   private fresh = true;
 
@@ -41,9 +43,12 @@ class PedalboardProcessor extends AudioWorkletProcessor {
       case 'source':
         if (m.kind !== this.kind) e.reset();
         this.kind = m.kind;
+        // the interface and a recorded DI are in digital full scale; the demo guitar is in volts already
+        e.external = m.kind !== SRC_DEMO;
         if (m.kind === SRC_DEMO) { this.demo.setPattern(m.pattern); }
         break;
       case 'file': this.file = m.data; this.filePos = 0; break;
+      case 'ir': e.setIR(m.data); break;
       case 'channel': this.channel = m.value; break;
       case 'mute': e.muted = m.value; break;
       case 'reset': e.reset(); this.demo.reset(); break;
@@ -64,7 +69,17 @@ class PedalboardProcessor extends AudioWorkletProcessor {
       if (!a) x.fill(0, 0, n);
       else if (this.channel === 0 || !b) for (let i = 0; i < n; i++) x[i] = a[i];
       else if (this.channel === 1) for (let i = 0; i < n; i++) x[i] = b[i];
-      else for (let i = 0; i < n; i++) x[i] = (a[i] + b[i]) * 0.5;
+      else {
+        // averaging the two would lose 6 dB when only one carries the guitar: weight each by its share of the power
+        let sa = 0, sb = 0;
+        for (let i = 0; i < n; i++) { sa += a[i] * a[i]; sb += b[i] * b[i]; }
+        const k = 1 - Math.exp(-n / (0.1 * sampleRate));
+        this.powL += (sa / n - this.powL) * k; this.powR += (sb / n - this.powR) * k;
+        const tot = this.powL + this.powR;
+        const w1 = tot > 1e-12 ? this.powL / tot : 0.5, w0 = this.wL;
+        for (let i = 0; i < n; i++) { const w = w0 + (w1 - w0) * (i + 1) / n; x[i] = a[i] * w + b[i] * (1 - w); }
+        this.wL = w1;
+      }
     } else if (this.kind === SRC_FILE && this.file && this.file.length > 0) {
       const f = this.file;
       for (let i = 0; i < n; i++) { x[i] = f[this.filePos]; if (++this.filePos >= f.length) this.filePos = 0; }
@@ -79,6 +94,7 @@ class PedalboardProcessor extends AudioWorkletProcessor {
     this.samples += n;
     const e = this.engine;
     if (e.peakIn > this.peakIn) this.peakIn = e.peakIn;
+    if (e.peakRaw > this.peakRaw) this.peakRaw = e.peakRaw;
     if (e.peakL > this.peakL) this.peakL = e.peakL;
     if (e.peakR > this.peakR) this.peakR = e.peakR;
     for (let s = 0; s < NSLOTS; s++) if (e.slotPeak[s] > this.slotPeak[s]) this.slotPeak[s] = e.slotPeak[s];
@@ -87,7 +103,7 @@ class PedalboardProcessor extends AudioWorkletProcessor {
       const msg: WorkletStats = {
         type: 'stats',
         load: this.busy / period,
-        peakIn: this.peakIn, peakL: this.peakL, peakR: this.peakR,
+        peakIn: this.peakIn, peakRaw: this.peakRaw, peakL: this.peakL, peakR: this.peakR,
         slotPeak: this.slotPeak.slice(),
         slotHeat: e.slotHeat.slice(),
         slotLive: e.slotLive.slice(),
@@ -97,7 +113,7 @@ class PedalboardProcessor extends AudioWorkletProcessor {
         scope: e.scope.slice(),
       };
       this.port.postMessage(msg, [msg.scope.buffer, msg.slotPeak.buffer, msg.slotHeat.buffer, msg.slotLive.buffer, msg.stageHeat.buffer]);
-      this.busy = 0; this.samples = 0; this.peakIn = this.peakL = this.peakR = 0;
+      this.busy = 0; this.samples = 0; this.peakIn = this.peakRaw = this.peakL = this.peakR = 0;
       this.slotPeak.fill(0);
     }
     return true;
