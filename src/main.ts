@@ -6,16 +6,18 @@ import { Board, SRC_LIVE, SRC_DEMO, SRC_FILE } from './audio.ts';
 import { PluginBoard, inPlugin } from './plugin.ts';
 import type { WorkletStats } from './worklet/protocol.ts';
 import {
-  PARAM_BY_ID, MODULES, CATEGORIES, NSLOTS, M_GLOW, M_RASP, M_FUZZ, M_MUFF, M_BOOST, M_TRANSPARENT, M_METAL, isAmp, M_OCTAVE, RIGS, RIG_TAGS, NOT_IN_RIG,
-  defaults, rigValues, diffValues, fromNorm, toNorm, slotTypeId, slotOnId, slotKnobId, type ParamValues,
+  PARAM_BY_ID, MODULES, CATEGORIES, NSLOTS, M_GLOW, M_RASP, M_FUZZ, M_MUFF, M_BOOST, M_TRANSPARENT, M_METAL, isAmp, M_OCTAVE, M_CABIR, M_NAM, RIGS, RIG_TAGS, NOT_IN_RIG,
+  defaults, rigValues, diffValues, fromNorm, toNorm, slotTypeId, slotOnId, slotKnobId, type ParamValues, type Rig,
 } from './dsp/params.ts';
 import { STAGE_STRIDE } from './dsp/engine.ts';
 import { insertUnit, removeUnit, moveUnit, units, pack, changes, toRig, type Perm } from './rack.ts';
 import { treat, COMPLAINTS, type Complaint } from './doctor.ts';
+import { hintFor } from './ui/hints.ts';
 import { makeControl, type Control } from './ui/controls.ts';
 import { Spine } from './ui/spine.ts';
 import { ModuleViz, type VizLive } from './ui/viz.ts';
 import { Stage } from './ui/stage.ts';
+import { encodeShare, parseAny, codeInHash, decodeShare, shareLink, downloadRig } from './share.ts';
 import { loadState, saveState, loadUserRigs, saveUserRigs, cleanValues, type UserRig } from './settings.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -65,6 +67,27 @@ function doctor(c: Complaint): void {
   toast(`${COMPLAINTS.find((x) => x.id === c)!.label}: moved ${r.moved.join(', ')}`);
 }
 
+/** The footer explains the knob under the pointer (or the focus) in plain words. */
+function wireHints(): void {
+  const bar = $('knob-hint'), keys = $('keys-hint');
+  const show = (e: Event) => {
+    const k = (e.target as HTMLElement).closest<HTMLElement>('.knob, .knob-wrap, [data-hint]');
+    const text = k?.dataset.hint;
+    if (!k || !text) return;
+    const name = k.querySelector('.label')?.textContent ?? '';
+    bar.textContent = '';
+    const b = document.createElement('b'); b.textContent = name.toLowerCase();
+    bar.append(b, ` — ${text}`);
+    bar.hidden = false; keys.hidden = true;
+  };
+  const hide = () => { bar.hidden = true; keys.hidden = false; };
+  for (const id of ['units', 'in-gain', 'heat']) {
+    const n = $(id);
+    n.addEventListener('mouseover', show); n.addEventListener('focusin', show);
+    n.addEventListener('mouseout', hide); n.addEventListener('focusout', hide);
+  }
+}
+
 function wireDoctor(): void {
   const pop = $('doctor-pop'), btn = $('doctor-btn'), grid = $('doctor-grid');
   for (const c of COMPLAINTS) {
@@ -95,7 +118,7 @@ function wireDoctor(): void {
 
 function persist(): void {
   if (plugin) return;   // the session keeps it
-  saveState({ rig: rigName, values: cleanValues(values) as ParamValues, volume: values.volume, source: source === 'file' ? 'demo:0' : source, device, channel });
+  saveState({ rig: rigName, values: cleanValues(values) as ParamValues, volume: values.volume, iface: values.iface, source: source === 'file' ? 'demo:0' : source, device, channel });
 }
 
 let toastTimer = 0;
@@ -153,6 +176,7 @@ function buildUnit(slot: number, pos: number, count: number): UnitView {
   const el = document.createElement('section');
   el.className = 'unit';
   el.dataset.slot = String(slot);
+  el.dataset.cat = def.cat;
   el.style.setProperty('--accent', def.accent);
   el.setAttribute('aria-label', `${pos + 1}: ${def.name}`);
 
@@ -192,15 +216,43 @@ function buildUnit(slot: number, pos: number, count: number): UnitView {
     const id = slotKnobId(slot, k);
     const big = isAmp(type) && (kd.id === 'gain' || kd.id === 'master');
     const c = makeControl(kd, fromNorm(kd, values[id]), (real) => setValue(id, toNorm(kd, real)), { size: big ? 52 : 44, segLimit: 4 });
+    c.el.dataset.hint = hintFor(def.id, kd.id);
     knobs.append(c.el);
     return c;
   });
   body.append(canvas, knobs);
+  if (type === M_CABIR) body.append(filePicker('ir'));
+  if (type === M_NAM) body.append(filePicker('nam'));
   el.append(head, body);
   if (isAmp(type)) el.classList.add('wide');
   const view: UnitView = { slot, type, el, viz: new ModuleViz(canvas, type), lvl: lvl.firstChild as HTMLElement, controls };
   refreshUnit(view);
   return view;
+}
+
+const loaded = { ir: '', nam: '' };
+const pickLabel = { ir: 'load IR…', nam: 'load capture…' };
+function setLoaded(kind: 'ir' | 'nam', name: string): void {
+  loaded[kind] = name;
+  for (const b of document.querySelectorAll<HTMLElement>(`.file-pick[data-kind="${kind}"] .chip`)) b.textContent = name ? `${kind === 'ir' ? 'IR' : 'NAM'}: ${name}` : pickLabel[kind];
+}
+/** "load…" on the cab IR and NAM units. The IR is a WAV in the browser too; the plugin opens its own chooser for both. */
+function filePicker(kind: 'ir' | 'nam'): HTMLElement {
+  const wrap = document.createElement('div');
+  wrap.className = 'file-pick'; wrap.dataset.kind = kind;
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'chip'; btn.textContent = loaded[kind] ? `${kind === 'ir' ? 'IR' : 'NAM'}: ${loaded[kind]}` : pickLabel[kind];
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'audio/*,.wav'; input.hidden = true;
+  btn.addEventListener('click', () => { if (plugin) { if (kind === 'ir') plugin.pickIR(); else plugin.pickNAM(); } else input.click(); });
+  input.addEventListener('change', async () => {
+    const f = input.files?.[0]; if (!f) return;
+    try { await (board as Board).loadIR(f); setLoaded('ir', f.name.replace(/\.[^.]+$/, '')); }
+    catch (err) { toast(err instanceof Error ? err.message : 'could not load that file'); }
+    input.value = '';
+  });
+  wrap.append(btn, input);
+  return wrap;
 }
 
 function refreshUnit(v: UnitView): void {
@@ -295,7 +347,7 @@ function wireDrops(): void {
 // ---- rigs ----------------------------------------------------------------------
 
 function loadRig(rig: Listed): void {
-  const p = pack({ ...rig.values(), volume: values.volume });
+  const p = pack({ ...rig.values(), volume: values.volume, iface: values.iface });
   values = p.values;
   folded = new Array(NSLOTS).fill(false);
   rigName = rig.name; rigTag = rig.tag;
@@ -338,6 +390,67 @@ function openLibrary(tab: 'rigs' | 'parts', focusSearch = false): void {
 }
 function closeLibrary(): void { document.body.classList.remove('lib-open'); $('savebar').hidden = true; }
 
+// Sections start collapsed; a search shows every match whatever is folded.
+const openCats = new Set<string>();
+
+function applyFold(list: HTMLElement, key: (el: HTMLElement) => string): void {
+  const searching = $<HTMLInputElement>('lib-search').value.trim().length > 0;
+  for (const el of list.querySelectorAll<HTMLElement>('.rig, .part, .empty')) {
+    el.classList.toggle('folded', !searching && !openCats.has(key(el)));
+  }
+  for (const c of list.querySelectorAll<HTMLElement>('.cat')) {
+    const on = openCats.has(key(c));
+    c.classList.toggle('open', on || searching);
+    c.setAttribute('aria-expanded', String(on || searching));
+  }
+}
+const rigKey = (el: HTMLElement): string => `rigs:${el.dataset.tag}`;
+const partKey = (el: HTMLElement): string => `parts:${el.dataset.cat}`;
+
+function makeCat(head: HTMLElement, key: string, redo: () => void): void {
+  head.tabIndex = 0; head.setAttribute('role', 'button');
+  const flip = (): void => { if (openCats.has(key)) openCats.delete(key); else openCats.add(key); redo(); };
+  head.addEventListener('click', flip);
+  head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+}
+
+// ---- sharing ---------------------------------------------------------------------
+
+/** Take in a rig that came from outside: kept under "your rigs" (a factory name gets a suffix) and loaded. */
+function importRig(rig: Rig, keep: boolean): void {
+  let name = rig.name;
+  if (RIGS.some((r) => r.name.toLowerCase() === name.toLowerCase())) name = `${name.slice(0, 30)} (shared)`;
+  const vals = { ...rigValues(rig) };
+  loadRig({ name, tag: 'mine', values: () => vals });
+  if (keep) {
+    userRigs = [...userRigs.filter((u) => u.name !== name), { name, values: diffValues(vals) }];
+    storeUserRigs(); buildRigList();
+    toast(`added "${name}" to your rigs`);
+  } else {
+    markEdited(true);
+    toast(`"${name}" was shared with you: save it to keep it`, 6000);
+  }
+  closeLibrary();
+}
+
+async function importText(text: string, keep: boolean): Promise<void> {
+  try { importRig(await parseAny(text), keep); } catch (e) { toast(e instanceof Error ? e.message : 'that is not a rig'); }
+}
+
+async function shareRig(): Promise<void> {
+  const link = shareLink(await encodeShare(toRig(values, rigName, rigTag)));
+  try {
+    await navigator.clipboard.writeText(link);
+    $('share').classList.add('done'); setTimeout(() => $('share').classList.remove('done'), 900);
+    toast('link copied: send it to anyone');
+  } catch { window.prompt('copy this link', link); }
+}
+
+function newRig(): void {
+  loadRig({ name: 'untitled', tag: 'mine', values: () => defaults() });
+  closeLibrary();
+}
+
 function buildRigList(): void {
   const list = $('lib-rigs');
   list.textContent = '';
@@ -349,6 +462,7 @@ function buildRigList(): void {
     cat.innerHTML = '<span></span><span class="count"></span>';
     (cat.firstChild as HTMLElement).textContent = tag === 'mine' ? 'your rigs' : tag;
     (cat.lastChild as HTMLElement).textContent = String(inTag.length);
+    makeCat(cat, `rigs:${tag}`, () => applyFold(list, rigKey));
     list.append(cat);
     if (inTag.length === 0) {
       const e = document.createElement('div'); e.className = 'empty'; e.dataset.tag = tag;
@@ -384,6 +498,7 @@ function buildRigList(): void {
   }
   markLibrary();
   filterLibrary();
+  applyFold(list, rigKey);
 }
 
 function buildPartList(): void {
@@ -394,9 +509,10 @@ function buildPartList(): void {
     head.className = 'cat'; head.dataset.cat = cat;
     head.innerHTML = '<span></span>';
     (head.firstChild as HTMLElement).textContent = cat;
+    makeCat(head, `parts:${cat}`, () => applyFold(list, partKey));
     list.append(head);
     MODULES.forEach((m, type) => {
-      if (m.cat !== cat || m.hidden) return;
+      if (m.cat !== cat || m.hidden || (m.pluginOnly && !plugin)) return;
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'part'; b.draggable = true; b.dataset.cat = cat;
       b.dataset.search = `${m.name} ${m.id} ${m.blurb} ${cat}`.toLowerCase();
@@ -416,6 +532,7 @@ function buildPartList(): void {
       list.append(b);
     });
   }
+  applyFold(list, partKey);
 }
 
 function markLibrary(): void {
@@ -438,6 +555,7 @@ function filterLibrary(): void {
   for (const cat of parts.querySelectorAll<HTMLElement>('.cat')) {
     cat.hidden = q.length > 0 && !parts.querySelector(`.part[data-cat="${cat.dataset.cat}"]:not([hidden])`);
   }
+  applyFold(rigs, rigKey); applyFold(parts, partKey);
 }
 
 function openSave(): void {
@@ -481,6 +599,7 @@ async function setSource(next: string): Promise<void> {
   if (next === 'file') { $<HTMLInputElement>('file').click(); sel.value = source; return; }
   source = next; sel.value = next;
   $('live-row').classList.toggle('show', next === 'live');
+  $('iface-row').classList.toggle('show', next === 'live');
   if (plugin) { plugin.setSource(next === 'live' ? SRC_LIVE : SRC_DEMO, Number(next.split(':')[1] ?? 0)); return; }
   if (!board.running) { persist(); return; }
   if (next === 'live') {
@@ -494,6 +613,7 @@ async function setSource(next: string): Promise<void> {
       toast(`no input: ${(e as Error).message || 'permission refused'}`, 6000);
       source = 'demo:0'; sel.value = source; board.setSource(SRC_DEMO, 0);
       $('live-row').classList.remove('show');
+      $('iface-row').classList.remove('show');
     }
   } else {
     board.closeInput();
@@ -514,6 +634,7 @@ async function useFile(f: File): Promise<void> {
     opt.textContent = `file · ${f.name.slice(0, 24)}`;
     sel.value = 'file';
     $('live-row').classList.remove('show');
+    $('iface-row').classList.remove('show');
     toast(`looping ${f.name} (${secs.toFixed(1)} s)`);
   } catch {
     toast('could not read that file as audio');
@@ -586,9 +707,12 @@ board.onStats = (s) => { fresh = s; latest = s; };
 
 const meterDb = (x: number) => Math.max(0, Math.min(1, (20 * Math.log10(x + 1e-9) + 60) / 60));
 let inClipUntil = 0, outClipUntil = 0;
-// the input meter's target: a passive pickup peaks around 0.1 to 0.4 V at the input (the demo guitar does), so that
-// is the green band; under 0.03 V is too quiet for the drives to mean what their knobs say, over 0.8 V is hot
-const IN_ZONE: [number, number] = [0.1, 0.4], IN_LOW = 0.03, IN_HOT = 0.8;
+// the input meter reads volts at the rack's input (the interface reference turns the track's samples into volts),
+// from -60 to +6 dBV. A passive pickup peaks between ~0.1 V (soft playing) and ~1 V (a humbucker strummed hard:
+// single coils 0.25-0.45 V, bridge humbuckers 0.6-0.85 V), so that is the green band; under 0.03 V the drives
+// and amps hear far less than a real guitar gives them (check the interface reference), over 2 V is hot
+const inMeterDb = (x: number) => Math.max(0, Math.min(1, (20 * Math.log10(x + 1e-9) + 60) / 66));
+const IN_ZONE: [number, number] = [0.1, 1], IN_LOW = 0.03, IN_HOT = 2;
 const IN_HINTS: Record<string, string> = { idle: '–', low: 'quiet · raise input', near: 'a little low', good: 'good level', hot: 'hot · ease input', over: 'too hot · lower input' };
 let inHold = 0, inHoldUntil = 0, inSeen = 0, inState = 'idle';
 const NO_STAGES = new Float32Array(STAGE_STRIDE);
@@ -604,15 +728,15 @@ function frame(now: number): void {
     for (const v of views) if (drives(v.type) && isOn(v.slot)) heat = Math.max(heat, s.slotHeat[v.slot]);
     stage.feed(out, heat);
     spine.setLive({ inPeak: s.peakIn, slotPeak: s.slotPeak, slotHeat: s.slotHeat });
-    $('in-meter').style.width = `${meterDb(s.peakIn) * 100}%`;
+    $('in-meter').style.width = `${inMeterDb(s.peakIn) * 100}%`;
     // the peak is held for a moment so it can be read, then follows the signal down
     if (s.peakIn >= inHold || now > inHoldUntil) { inHold = s.peakIn; inHoldUntil = now + 1500; }
     if (s.peakIn > 0.003) inSeen = now;
-    $('in-hold').style.left = `${meterDb(inHold) * 100}%`;
+    $('in-hold').style.left = `${inMeterDb(inHold) * 100}%`;
     const st = now - inSeen > 3000 ? 'idle' : inHold < IN_LOW ? 'low' : inHold < IN_ZONE[0] ? 'near' : inHold <= IN_ZONE[1] ? 'good' : inHold <= IN_HOT ? 'hot' : 'over';
     if (st !== inState) { inState = st; const h = $('in-hint'); h.dataset.state = st; h.textContent = IN_HINTS[st]; }
     $('out-meter').style.width = `${meterDb(out) * 100}%`;
-    if (s.peakIn > 0.98) inClipUntil = now + 1200;
+    if (s.peakRaw > 0.98) inClipUntil = now + 1200;   // the interface itself clipping
     if (out > 0.98) outClipUntil = now + 1200;
     $('in-clip').classList.toggle('on', now < inClipUntil);
     $('out-clip').classList.toggle('on', now < outClipUntil);
@@ -641,37 +765,62 @@ function frame(now: number): void {
 
 // ---- wiring the page up ---------------------------------------------------------
 
+/** The interface reference list: where a 1 V peak lands on your interface (−13 dBFS is typical at minimum gain). */
+function buildIface(): void {
+  const sel = $<HTMLSelectElement>('iface'), def = PARAM_BY_ID.iface;
+  for (let d = def.max; d >= def.min; d--) {
+    const o = document.createElement('option');
+    o.value = String(d);
+    o.textContent = `${d < 0 ? '−' : ''}${Math.abs(d)} dB${d === def.def ? ' ·' : ''}`;
+    sel.append(o);
+  }
+}
+function showIface(): void {
+  const sel = $<HTMLSelectElement>('iface'), v = Math.round(values.iface);
+  sel.value = String(v);
+}
+
 function init(): void {
   for (const [slot, id, hero] of [['in-gain', 'inGain', false], ['heat', 'heat', true]] as const) {
     const c = makeControl(PARAM_BY_ID[id], values[id], (v) => setValue(id, v), { size: hero ? 58 : 44, hero });
+    c.el.dataset.hint = hintFor('', id);
     c.el.title = id === 'heat' ? 'heat: pushes every drive and amp harder (or backs them off) together' : 'input gain: match your pickups';
     globals.set(id, c);
     $(slot).append(c.el);
   }
   const zone = $('in-zone');
-  zone.style.left = `${meterDb(IN_ZONE[0]) * 100}%`;
-  zone.style.width = `${(meterDb(IN_ZONE[1]) - meterDb(IN_ZONE[0])) * 100}%`;
+  zone.style.left = `${inMeterDb(IN_ZONE[0]) * 100}%`;
+  zone.style.width = `${(inMeterDb(IN_ZONE[1]) - inMeterDb(IN_ZONE[0])) * 100}%`;
+  buildIface();
   buildPartList();
   wireControls();
   wireDoctor();
+  wireHints();
   requestAnimationFrame(frame);
-  if (plugin) { initPlugin(plugin); return; }
+  if (plugin) {
+    // the plugin's page has no address bar, clipboard or downloads; sharing there is the user-rigs file
+    for (const id of ['share', 'export', 'import']) $(id).style.display = 'none';
+    initPlugin(plugin); return;
+  }
 
   const saved = loadState();
   if (saved.volume !== undefined) values.volume = saved.volume;
+  if (saved.iface !== undefined) values.iface = saved.iface;
   $<HTMLInputElement>('volume').value = String(values.volume);
+  showIface();
   if (saved.source) source = saved.source;
   if (saved.device) device = saved.device;
   if (saved.channel !== undefined) channel = saved.channel;
   $<HTMLSelectElement>('channel').value = String(channel);
   $<HTMLSelectElement>('source').value = source;
   $('live-row').classList.toggle('show', source === 'live');
+  $('iface-row').classList.toggle('show', source === 'live');
   const rig = allRigs().find((r) => r.name === saved.rig) ?? allRigs()[0];
   buildRigList();
   loadRig(rig);
   if (saved.values && saved.rig === rig.name) {
     // your edits on top of it
-    const v = pack({ ...defaults(), ...saved.values, volume: values.volume }).values;
+    const v = pack({ ...defaults(), ...saved.values, volume: values.volume, iface: values.iface }).values;
     if (units(v).length > 0 && Object.keys(v).some((k) => v[k] !== values[k])) {
       values = v;
       board.loadRig(values);
@@ -680,6 +829,17 @@ function init(): void {
       markEdited(true);
     }
   }
+  const code = codeInHash(location.hash);
+  if (code) {
+    history.replaceState(null, '', location.pathname + location.search);
+    decodeShare(code).then((r) => importRig(r, false), (e) => toast(e instanceof Error ? e.message : 'that link is not a rig'));
+  }
+  window.addEventListener('hashchange', () => {
+    const c = codeInHash(location.hash);
+    if (!c) return;
+    history.replaceState(null, '', location.pathname + location.search);
+    decodeShare(c).then((r) => importRig(r, false), (e) => toast(e instanceof Error ? e.message : 'that link is not a rig'));
+  });
   document.body.classList.add('asleep');
 }
 
@@ -695,8 +855,24 @@ function wireControls(): void {
   $('tab-parts').addEventListener('click', () => setTab('parts'));
   $('lib-search').addEventListener('input', filterLibrary);
   $('save').addEventListener('click', openSave);
+  $('new-rig').addEventListener('click', newRig);
   $('savebar').addEventListener('submit', (e) => { e.preventDefault(); saveRig(); });
   $('save-cancel').addEventListener('click', () => { $('savebar').hidden = true; });
+  $('share').addEventListener('click', shareRig);
+  $('export').addEventListener('click', () => downloadRig(toRig(values, rigName, rigTag)));
+  $('import').addEventListener('click', () => $('rig-file').click());
+  $<HTMLInputElement>('rig-file').addEventListener('change', async (e) => {
+    const el = e.target as HTMLInputElement, f = el.files?.[0];
+    if (f) await importText(await f.text(), true);
+    el.value = '';
+  });
+  // a share link or rig JSON pasted anywhere but a text field
+  window.addEventListener('paste', (e) => {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    const text = e.clipboardData?.getData('text') ?? '';
+    if (text.includes('#rig=') || text.trimStart().startsWith('{"')) { e.preventDefault(); void importText(text, true); }
+  });
   $('copy').addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(JSON.stringify(toRig(values, rigName, rigTag), null, 2));
@@ -710,6 +886,7 @@ function wireControls(): void {
   $<HTMLSelectElement>('source').addEventListener('change', (e) => setSource((e.target as HTMLSelectElement).value));
   $<HTMLSelectElement>('device').addEventListener('change', (e) => { device = (e.target as HTMLSelectElement).value; setSource('live'); });
   $<HTMLSelectElement>('channel').addEventListener('change', (e) => { channel = Number((e.target as HTMLSelectElement).value); board.setChannel(channel); persist(); });
+  $<HTMLSelectElement>('iface').addEventListener('change', (e) => setValue('iface', Number((e.target as HTMLSelectElement).value), false));
   $<HTMLInputElement>('file').addEventListener('change', (e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) useFile(f); (e.target as HTMLInputElement).value = ''; });
   // an audio file dropped anywhere but the rack loops as the input
   window.addEventListener('dragover', (e) => {
@@ -722,7 +899,7 @@ function wireControls(): void {
     const f = e.dataTransfer?.files?.[0];
     if (!f) return;
     e.preventDefault();
-    useFile(f);
+    if (/\.json$/i.test(f.name)) void f.text().then((t) => importText(t, true)); else useFile(f);
   });
   navigator.mediaDevices?.addEventListener?.('devicechange', () => { if (source === 'live') refreshDevices(); });
 
@@ -763,6 +940,7 @@ function applyHostState(hostValues: ParamValues, preset: string): void {
   rigTag = allRigs().find((r) => r.name === name)?.tag ?? 'mine';
   for (const [id, c] of globals) c.set(values[id]);
   $<HTMLInputElement>('volume').value = String(values.volume);
+  showIface();
   renderRack();
   $('rig-name').textContent = rigName;
   $('rig-tag').textContent = rigTag;
@@ -784,9 +962,12 @@ function initPlugin(p: PluginBoard): void {
     source = st.source; sel.value = st.source;
     channel = st.channel; $<HTMLSelectElement>('channel').value = String(channel);
     $('live-row').classList.toggle('show', source === 'live');
+    $('iface-row').classList.toggle('show', source === 'live');
     tunerMute = st.muted; $('tuner').classList.toggle('muted', st.muted);
   };
   // automation and the host's own editor
+  p.onIR = (n) => setLoaded('ir', n);
+  p.onNAM = (n, err) => { setLoaded('nam', n); if (err) toast(`NAM: ${err}`); };
   p.onParams = (changed) => {
     let rebuild = false;
     for (const id in changed) {
@@ -794,6 +975,7 @@ function initPlugin(p: PluginBoard): void {
       values[id] = v;
       globals.get(id)?.set(v);
       if (id === 'volume') $<HTMLInputElement>('volume').value = String(v);
+      if (id === 'iface') showIface();
       const m = /^s(\d)(type|on|k(\d+))$/.exec(id);
       if (!m) continue;
       const slot = Number(m[1]) - 1, view = views.find((x) => x.slot === slot);

@@ -23,7 +23,7 @@ const server = createServer((req, res) => {
 }).listen(PORT);
 
 const chrome = spawn(CHROME, [
-  '--headless=new', `--remote-debugging-port=${DEBUG}`, '--window-size=1320,900', '--hide-scrollbars',
+  '--headless=new', `--remote-debugging-port=${DEBUG}`, `--window-size=${process.env.WIDTH ?? 1320},900`, '--hide-scrollbars',
   '--no-first-run', '--no-default-browser-check', '--user-data-dir=/tmp/ft-pedalboard-chrome-plugin', 'about:blank',
 ], { stdio: 'ignore' });
 
@@ -148,6 +148,7 @@ async function main(): Promise<void> {
   check(await evaluate("document.querySelector('#tuner').classList.contains('muted')") === true, 'the tuner mute comes back');
 
   await evaluate(`window.__toPage({ type: 'state', values: ${JSON.stringify({ s1type: 1, s2type: 3, s3type: 6, s4type: 11, s5type: 13 })}, preset: 'Solo Ridge', user: [], source: 'demo:0', channel: 0, muted: false })`);
+  await evaluate('window.scrollTo(0, 0); for (const e of document.querySelectorAll("*")) if (e.scrollTop) e.scrollTop = 0');
   await sleep(300);
   mkdirSync('out', { recursive: true });
   const shot = await send('Page.captureScreenshot', { format: 'png' }) as { data: string };

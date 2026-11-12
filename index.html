@@ -50,6 +50,10 @@
             <svg viewBox="0 0 16 16"><path d="M6 3.5 10.5 8 6 12.5" /></svg>
           </button>
           <div class="actions">
+            <button id="new-rig" class="chip" title="start a new sound from an empty rack (the current rig stays as it is)">
+              <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10" /></svg>
+              new
+            </button>
             <button id="save" class="chip" title="save this rig (⌘S)">
               <svg viewBox="0 0 16 16"><path d="M3 2.5h8l2.5 2.5v8.5h-10.5Z" /><path d="M5.5 2.5v3.5h4.5V2.5M5.5 13.5v-4h5v4" /></svg>
               save
@@ -57,6 +61,18 @@
             <button id="copy" class="chip" title="copy the rig as JSON (module names and knob values)">
               <svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8.5" rx="2" /><path d="M3.5 10.5V4a2 2 0 0 1 2-2H10" /></svg>
               copy
+            </button>
+            <button id="share" class="chip" title="copy a link to this rig: whoever opens it gets your rack and settings">
+              <svg viewBox="0 0 16 16"><circle cx="4" cy="8" r="1.8" /><circle cx="12" cy="3.8" r="1.8" /><circle cx="12" cy="12.2" r="1.8" /><path d="m5.7 7.1 4.6-2.4M5.7 8.9l4.6 2.4" /></svg>
+              share
+            </button>
+            <button id="export" class="chip" title="save this rig as a file you can send">
+              <svg viewBox="0 0 16 16"><path d="M8 2.5v8M4.8 7.6 8 10.8l3.2-3.2M3 13.5h10" /></svg>
+              export
+            </button>
+            <button id="import" class="chip" title="open a rig file (or drop one on the page, or paste a share link)">
+              <svg viewBox="0 0 16 16"><path d="M8 10.8v-8M4.8 5.7 8 2.5l3.2 3.2M3 13.5h10" /></svg>
+              import
             </button>
           </div>
         </div>
@@ -128,8 +144,9 @@
               <span class="io-label">in</span>
               <div class="slot" id="in-gain"></div>
               <div class="meter-col">
-                <div class="meter in" title="input level: keep the peaks inside the green band"><b class="zone" id="in-zone"></b><span id="in-meter"></span><em id="in-hold"></em><i id="in-clip"></i></div>
+                <div class="meter in" title="input level in volts at the rack (-60 to +6 dBV): a pickup peaks 0.1 to 1 V, the green band. Far below it with a real guitar? Check the interface level under this meter"><b class="zone" id="in-zone"></b><span id="in-meter"></span><em id="in-hold"></em><i id="in-clip"></i></div>
                 <small class="in-hint" id="in-hint" data-state="idle" aria-live="off">–</small>
+                <div class="live-only" id="iface-row"><select id="iface" title="interface level: where your interface reads a 1 V peak, in dBFS (the dot marks the usual −13 at minimum gain), so the amps see your guitar in volts. Most interfaces with their input gain at minimum read 1 V at about −13 dBFS; if you turn the interface's gain up, lower this by the same amount" aria-label="interface reference: 1 V peak reads at"></select></div>
               </div>
             </div>
             <div class="slot heat-slot" id="heat"></div>
@@ -153,13 +170,15 @@
       </div>
 
       <footer>
-        <div class="hint muted">
+        <div class="knob-hint" id="knob-hint" hidden></div>
+        <div class="hint muted" id="keys-hint">
           drag units by <b>⠿</b> to reorder · click the lamp or the socket on the cable to switch · <kbd>1</kbd>–<kbd>8</kbd> footswitches · <kbd>T</kbd> tuner mute · <kbd>←</kbd><kbd>→</kbd> rigs · <kbd>/</kbd> search · drag knobs, <kbd>Shift</kbd> fine, double-click resets
         </div>
       </footer>
     </div>
 
     <input id="file" type="file" accept="audio/*" hidden />
+    <input id="rig-file" type="file" accept=".json,application/json" hidden />
     <div id="doctor-pop" class="doctor-pop" role="group" aria-label="tone doctor" hidden>
       <p>what's wrong with it? each press moves a little, press again for more.</p>
       <div class="doctor-grid" id="doctor-grid"></div>

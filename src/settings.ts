@@ -12,6 +12,8 @@ export interface Saved {
   rig: string;
   values: ParamValues;
   volume: number;
+  /** The interface reference (dBFS of a 1 V peak): a property of your interface, not of a rig. */
+  iface?: number;
   source: string;
   device: string;
   channel: number;
@@ -45,6 +47,7 @@ export function loadState(): Partial<Saved> {
   if (typeof s.rig === 'string') out.rig = s.rig.slice(0, 60);
   if (s.values) out.values = cleanValues(s.values) as ParamValues;
   if (typeof s.volume === 'number' && Number.isFinite(s.volume)) out.volume = Math.min(1, Math.max(0, s.volume));
+  if (typeof s.iface === 'number' && Number.isFinite(s.iface)) out.iface = Math.min(PARAM_BY_ID.iface.max, Math.max(PARAM_BY_ID.iface.min, s.iface));
   if (typeof s.source === 'string' && /^(live|demo:[0-2])$/.test(s.source)) out.source = s.source;
   if (typeof s.device === 'string') out.device = s.device.slice(0, 200);
   if (typeof s.channel === 'number' && [0, 1, 2].includes(s.channel)) out.channel = s.channel;

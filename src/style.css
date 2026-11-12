@@ -55,7 +55,9 @@
 .source select { max-width: 170px; padding-top: 3px; padding-bottom: 3px; }
 .live-only { display: none; gap: 6px; }
 .live-only.show { display: flex; }
-#device { max-width: 150px; padding-top: 3px; padding-bottom: 3px; }
+#device { max-width: 120px; min-width: 0; padding-top: 3px; padding-bottom: 3px; }
+#iface-row { margin-top: 1px; }
+#iface { width: 100%; padding-top: 2px; padding-bottom: 2px; font-size: 10.5px; }
 #channel { padding-top: 3px; padding-bottom: 3px; }
 
 /* ---------- the two columns */
@@ -99,6 +101,11 @@
 }
 .lib-list .cat::before { content: ""; flex: none; width: 5px; height: 5px; background: var(--tagc, var(--faint)); box-shadow: 0 0 6px var(--tagc, transparent); }
 .lib-list .cat::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); }
+.lib-list .cat { cursor: pointer; user-select: none; }
+.lib-list .cat:hover { color: var(--ink); }
+.lib-list .cat > span:first-child::before { content: "▸"; display: inline-block; width: 1em; transition: transform 0.12s; }
+.lib-list .cat.open > span:first-child::before { transform: rotate(90deg); }
+.lib-list .folded { display: none; }
 .lib-list .cat .count { order: 2; color: var(--faint); letter-spacing: 0.04em; }
 .lib-list .cat[hidden], .lib-list .rig[hidden], .lib-list .part[hidden], .lib-list .empty[hidden] { display: none; }
 .lib-list .empty { padding: 7px 10px; border: 1px dashed var(--line-strong); font-family: var(--mono); font-size: 10px; color: var(--dim); }
@@ -136,7 +143,10 @@
 }
 .io-block { display: flex; align-items: center; gap: 10px; }
 .io-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--faint); }
-.heat-slot .knob { flex-direction: row; gap: 8px; }
+/* heat: the ring with its label and value under it, like the input knob (not the value on the cap) */
+.heat-slot .knob { flex-direction: column; gap: 2px; }
+.heat-slot .knob.hero .readout { position: static; font-size: 11px; color: var(--dim); }
+.heat-slot .knob.hero .label { margin-top: 0; color: var(--dim); }
 .rack-info { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
 .doctor-pop { position: fixed; z-index: 40; width: 280px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--glass-b); border: 1px solid var(--line-strong); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); backdrop-filter: blur(var(--blur)); }
 .doctor-pop[hidden] { display: none; }
@@ -276,4 +286,128 @@ body.dropping #app { outline: 2px dashed var(--accent); outline-offset: -6px; }
   .unit-body { padding: 8px 10px; }
   .status .io { align-items: flex-start !important; }
   #stats { min-width: 0; }
+}
+
+/* ---------- friendlier: readable type, plain help, amps that look like amps, pedals that look like pedals.
+   The Mycelia look stays (the dark stage, the glow, the cable, a colour per unit); what changes is that
+   the small print is bigger and quieter in tone, the knobs explain themselves, and the faceplates are
+   drawn as the thing they model. */
+
+:root { --faint: rgba(236, 222, 206, 0.5); --dim: rgba(236, 222, 206, 0.76); }
+
+.knob .label { font-family: var(--ui); font-size: 12px; letter-spacing: 0; text-transform: none; color: var(--dim); }
+.knob .readout { font-size: 11px; color: var(--dim); height: 15px; }
+.knob.hero .label { font-size: 12px; }
+.unit-head { height: 42px; }
+.unit-head h3 { font-size: 15px; letter-spacing: 0.07em; }
+.unit-head small { font-family: var(--ui); font-size: 12px; letter-spacing: 0; color: var(--dim); }
+.unit-head .num { font-size: 10.5px; }
+.lib-list .mods, .part .bl { font-size: 11px; }
+.io-label { font-size: 10.5px; }
+
+/* the knob explains itself in the footer */
+.knob-hint { min-height: 22px; padding: 2px 0; font-size: 14px; line-height: 1.45; color: var(--ink); }
+.knob-hint b { font-weight: 600; color: var(--accent); }
+.knob-hint[hidden], footer .hint[hidden] { display: none; }
+
+
+/* amps: a brass plate for the name, grille cloth along the bottom, a taller faceplate */
+.unit[data-cat="amp"] .unit-head h3 {
+  padding: 3px 13px; border-radius: 3px; letter-spacing: 0.1em; color: #2b1d09;
+  background: linear-gradient(180deg, #f0d48a, #c39a48 55%, #a57d33);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.unit[data-cat="amp"].off .unit-head h3 { filter: saturate(0.3) brightness(0.7); color: #2b1d09; }
+.unit[data-cat="amp"] .unit-body {
+  padding-bottom: 26px;
+  background:
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.42) 0 2px, rgba(255, 232, 190, 0.07) 2px 4px) bottom / 100% 14px no-repeat,
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 4px) bottom / 100% 14px no-repeat;
+}
+
+/* pedals: a rounded enamel box in the unit's colour, a chrome footswitch for the lamp */
+.unit:not([data-cat="amp"]):not([data-cat="eq"]) {
+  border-radius: 14px; border-left-width: 1px;
+  background:
+    radial-gradient(ellipse at 50% -20%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 65%),
+    linear-gradient(180deg, var(--plate-a), var(--plate-b));
+  border-color: color-mix(in srgb, var(--accent) 30%, rgba(255, 255, 255, 0.08));
+}
+.unit:not([data-cat="amp"]):not([data-cat="eq"]) .lamp {
+  width: 24px; height: 24px; border: 2px solid #17120d;
+  background: radial-gradient(circle at 35% 28%, #f6f3ec, #9a968e 52%, #4a4741);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.65), 0 0 0 3px #26201a, inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+}
+.unit:not([data-cat="amp"]):not([data-cat="eq"]):not(.off) .lamp { box-shadow: 0 2px 4px rgba(0, 0, 0, 0.65), 0 0 0 3px var(--accent), 0 0 12px var(--accent); background: radial-gradient(circle at 35% 28%, #fffdf6, #b8b3a8 52%, #5b5850); border-color: #17120d; }
+.unit:not([data-cat="amp"]):not([data-cat="eq"]) .lamp:hover { border-color: #17120d; background: radial-gradient(circle at 35% 28%, #fff, #c9c4b8 52%, #6a675e); }
+.unit:not([data-cat="amp"]):not([data-cat="eq"]) .unit-head h3 { color: color-mix(in srgb, var(--accent) 80%, white); }
+
+/* the library reads better a little larger */
+.lib-list .rig .nm, .part .nm { font-size: 15px; }
+
+/* ---------- the command bar: one row when it fits, two deliberate rows below 1000px, a stack on a phone.
+   Keyed off the width only, so the plugin (no ft.css narrow rules) gets the same layout as the page. */
+header.bar {
+  display: grid; align-items: center; gap: 10px 16px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "brand presets tuner status";
+}
+header.bar .brand { grid-area: brand; }
+header.bar .presets { grid-area: presets; justify-self: stretch; flex-wrap: nowrap; min-width: 0; }
+header.bar .tuner { grid-area: tuner; }
+header.bar .status { grid-area: status; padding-top: 0; border-top: 0; gap: 14px; min-width: 0; }
+header.bar #browse { flex: 0 1 300px; min-width: 120px; max-width: 300px; }
+header.bar .actions { flex: none; }
+/* the compact tuner: note, needle, cents under it */
+header.bar .tuner {
+  width: 168px; max-width: none; height: 44px; padding: 3px 10px 3px 6px;
+  grid-template-columns: 34px 1fr; column-gap: 8px; justify-self: end;
+}
+header.bar .tuner .note { font-size: 20px; }
+header.bar .tuner .cents { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* the input column: source on top, dsp load and the interface under it, all right-aligned */
+header.bar .status .io { flex-direction: column; align-items: flex-end; gap: 5px; min-width: 0; }
+header.bar .status .io:last-of-type { flex-direction: row; align-items: center; gap: 8px; }
+header.bar #stats { min-width: 0; }
+header.bar .master input { width: 76px; }
+@media (min-width: 1440px) { header.bar .tuner { width: 230px; } }
+
+/* tight: the chips go icon-only, the brand loses its small print */
+@media (max-width: 1320px) {
+  header.bar .actions .chip { font-size: 0; gap: 0; padding: 6px 8px; }
+  header.bar .actions .chip svg { width: 14px; height: 14px; }
+}
+@media (max-width: 1180px) {
+  header.bar .brand .sub { display: none; }
+  header.bar .brand h1 { font-size: 22px; }
+  header.bar .mark { width: 30px; height: 30px; }
+  header.bar .source select { max-width: 140px; }
+}
+
+/* two rows: brand and the rig on top; the tuner widens to meet the input on the second */
+@media (max-width: 999px) {
+  header.bar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "brand presets presets" "tuner tuner status";
+  }
+  header.bar .presets { justify-content: flex-end; }
+  header.bar #browse { flex-grow: 1; }
+  header.bar .tuner { justify-self: stretch; width: auto; }
+  header.bar .status { justify-content: flex-end; }
+  header.bar .status .io { flex-direction: row; align-items: center; gap: 10px; }
+}
+
+/* a phone: brand, then the rig across the width, then tuner and the input */
+@media (max-width: 700px) {
+  header.bar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "brand" "presets" "tuner" "status";
+    padding: 10px 12px; gap: 10px;
+  }
+  header.bar .presets { justify-content: stretch; }
+  header.bar #browse { flex: 1 1 auto; max-width: none; min-width: 0; }
+  /* the input on two lines at the left, power at the right */
+  header.bar .status { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  header.bar .status .io { grid-column: 1; flex-direction: row; flex-wrap: wrap; align-items: center !important; justify-content: flex-start; }
+  header.bar .status .power-wrap { grid-column: 2; grid-row: 1 / 3; }
 }

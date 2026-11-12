@@ -69,7 +69,7 @@ async function main(): Promise<void> {
   const fail = (msg: string) => { console.error(`FAIL ${msg}`); process.exitCode = 1; };
   const wait = (ms: number) => `new Promise((r) => setTimeout(r, ${ms}))`;
   if (!(Number(unitsN) >= 2)) fail('the first rig did not fill the rack');
-  if (parts !== 39) fail(`expected 39 components in the library, found ${parts}`);
+  if (parts !== 44) fail(`expected 44 components in the library, found ${parts}`);
   const wakeShown = await evaluate('getComputedStyle(document.querySelector("#wake")).display');
   if (wakeShown === 'none') fail('the switch-on button is not shown before power');
 
@@ -148,6 +148,19 @@ async function main(): Promise<void> {
   console.log(`tone doctor: treble/high cut ${doc[0].map((x) => x.toFixed(2))} -> ${doc[2].map((x) => x.toFixed(2))} -> undone ${doc[3].map((x) => x.toFixed(2))}, popover ${doc[1] ? 'opens' : 'did not open'}`);
   if (!doc[1] || !(doc[2][0] < doc[0][0]) || !(doc[2][1] < doc[0][1]) || doc[3][0] !== doc[0][0] || doc[3][1] !== doc[0][1] || !doc[4]) fail('tone doctor did not work');
 
+  // the friendlier faceplates: a knob explains itself in the footer
+  const friendly = await evaluate(`(() => {
+    const out = [], amp = document.querySelector('.unit[data-cat="amp"]');
+    const knob = amp.querySelector('.knob'), bar = document.querySelector('#knob-hint');
+    knob.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    out.push(!bar.hidden, bar.textContent.length);
+    knob.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    out.push(bar.hidden);
+    return out;
+  })()`) as [boolean, number, boolean];
+  console.log(`knob hints: ${friendly[0] ? `shows (${friendly[1]} chars)` : 'did not show'}, clears ${friendly[2]}`);
+  if (!friendly[0] || friendly[1] < 20 || !friendly[2]) fail('the knob hints did not work');
+
   // the input meter's target zone: with the demo guitar playing, the hint settles on a state and the green band is drawn
   await sleep(800);
   const meter = await evaluate(`(() => { const h = document.querySelector('#in-hint'), z = document.querySelector('#in-zone'); return [h.dataset.state, h.textContent, z.style.width, document.querySelector('#in-hold').style.left]; })()`) as string[];
@@ -209,6 +222,22 @@ async function main(): Promise<void> {
   const left = await evaluate('document.querySelectorAll("#lib-rigs .rig[data-tag=mine]").length');
   console.log(`save: ${saved[0]} of yours, header "${saved[1]}"; after delete ${left}`);
   if (saved[0] !== 1 || saved[1] !== 'Check Rig' || left !== 0) fail('saving rigs does not work');
+
+  // sharing: the chips are there; a link in the address loads the rig (unsaved); a pasted link is kept under "your rigs"
+  const chips = await evaluate('["share", "export", "import"].map((id) => !!document.getElementById(id) && getComputedStyle(document.getElementById(id)).display !== "none")');
+  if (!(chips as boolean[]).every(Boolean)) fail('the share, export and import chips are missing');
+  const b64u = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  await evaluate(`location.hash = "#rig=j${b64u({ name: 'Hash Rig', rack: [{ m: 'glow' }, { m: 'envfilter', v: { sens: 0.7 } }, { m: 'pitch', v: { shift: -12 } }] })}"`);
+  await sleep(500);
+  const viaHash = await evaluate('[document.querySelector("#rig-name").textContent, location.hash, document.querySelectorAll("#lib-rigs .rig[data-tag=mine]").length]') as [string, string, number];
+  console.log(`share: a link loads "${viaHash[0]}", address cleared "${viaHash[1]}", ${viaHash[2]} of yours`);
+  if (viaHash[0] !== 'Hash Rig' || viaHash[1] !== '' || viaHash[2] !== 0) fail('a share link in the address did not load the rig');
+  await evaluate(`{ const dt = new DataTransfer(); dt.setData("text", "https://example.test/#rig=j${b64u({ name: 'Paste Rig', rack: [{ m: 'hall' }] })}"); document.body.dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }`);
+  await sleep(500);
+  const viaPaste = await evaluate('[document.querySelector("#rig-name").textContent, document.querySelectorAll("#lib-rigs .rig[data-tag=mine]").length]') as [string, number];
+  console.log(`share: a pasted link loads "${viaPaste[0]}", ${viaPaste[1]} of yours`);
+  if (viaPaste[0] !== 'Paste Rig' || viaPaste[1] !== 1) fail('a pasted share link was not imported');
+  await evaluate('{ const d = document.querySelector("#lib-rigs .rig[data-tag=mine] .del"); d.click(); d.click(); }');
 
   // narrow window: the library becomes a drawer
   await evaluate('document.querySelector("#lib-close").click()');

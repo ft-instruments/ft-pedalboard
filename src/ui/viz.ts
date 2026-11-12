@@ -8,12 +8,13 @@
 // decay.
 
 import { driveCurve } from '../dsp/drive.ts';
-import { ToneStack, STACK_FENDER, STACK_MARSHALL, STACK_TOPBOOST, STACK_TWEED, STACK_HIWATT, STACK_BOUTIQUE } from '../dsp/tonestack.ts';
-import { Eq } from '../dsp/eq.ts';
+import { ToneStack } from '../dsp/tonestack.ts';
+import { ampStack, ampStages } from '../dsp/amp.ts';
+import { Eq, Eq7 } from '../dsp/eq.ts';
 import { Biquad } from '../dsp/util.ts';
 import {
-  M_GATE, M_COMP, M_GLOW, M_RASP, M_FUZZ, M_AMP, M_EQ, M_CHORUS, M_PHASER, M_TREM, M_ECHO, M_SPRING, M_HALL,
-  M_MUFF, M_BOOST, M_AMP2, M_FLANGER, M_TRANSPARENT, M_METAL, M_AMP3, M_PLATE, M_ROOM, M_WAH, M_VIBE, M_ROTARY, M_OCTAVE, M_GTONE, M_SDELAY, M_AMP_FIRST, isAmp,
+  M_GATE, M_COMP, M_COMP2, M_EQ7, M_GLOW, M_RASP, M_FUZZ, M_AMP, M_EQ, M_CHORUS, M_PHASER, M_TREM, M_ECHO, M_SPRING, M_HALL,
+  M_MUFF, M_BOOST, M_AMP2, M_FLANGER, M_TRANSPARENT, M_METAL, M_AMP3, M_PLATE, M_ROOM, M_WAH, M_VIBE, M_ROTARY, M_OCTAVE, M_GTONE, M_SDELAY, M_ENVFILTER, M_PITCH, M_AMP_FIRST, isAmp,
   CAB_TYPES, CAB2_TYPES, CAB3_TYPES, CAB4_TYPES, AMP_VOICING_BASE, driveKind,
 } from '../dsp/params.ts';
 import { heatColour } from './spine.ts';
@@ -27,9 +28,8 @@ export interface VizLive {
 }
 
 // the first amp's four channels, then the second amp's three
-const AMP_STAGES = [2, 3, 4, 2, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3];
-const AMP_STACKS = [STACK_FENDER, STACK_MARSHALL, STACK_MARSHALL, STACK_TOPBOOST, STACK_TWEED, STACK_HIWATT, STACK_BOUTIQUE, STACK_MARSHALL, STACK_FENDER, STACK_FENDER,
-  STACK_FENDER, STACK_TWEED, STACK_HIWATT, STACK_MARSHALL];
+const AMP_STAGES = Array.from({ length: 14 }, (_, v) => ampStages(v));
+
 const FS = 48000;
 const MONO = '"Geist Mono", monospace';
 
@@ -77,6 +77,7 @@ export class ModuleViz {
   private hi = 0;
   private stack = new ToneStack();
   private eq = new Eq(FS);
+  private eq7 = new Eq7(FS);
   private eq2 = new Biquad();
   private dot = 0;
 
@@ -108,7 +109,7 @@ export class ModuleViz {
         label(ctx, live.heat > 0.5 ? 'closed' : 'open', w - 6, 13);
         break;
       }
-      case M_COMP: {
+      case M_COMP: case M_COMP2: {
         // gain reduction over time, hanging from the top
         this.hist[this.hi] = live.live;
         this.hi = (this.hi + 1) % this.hist.length;
@@ -147,6 +148,12 @@ export class ModuleViz {
         this.eq2.lowpass(FS, 500 * Math.pow(14, k[0]), 0.5 + 0.5 * k[0]);
         grid(ctx, 6, w - 6, h);
         curve(ctx, accent, 6, w - 6, h, (f) => 20 * Math.log10(this.eq2.mag(FS, f) * k[1] * k[1] + 1e-6), 36, true);
+        break;
+      }
+      case M_EQ7: {
+        this.eq7.set(k);
+        grid(ctx, 6, w - 6, h);
+        curve(ctx, accent, 6, w - 6, h, (f) => 20 * Math.log10(this.eq7.mag(f)) + k[7], 30, true);
         break;
       }
       case M_EQ: {
@@ -284,6 +291,27 @@ export class ModuleViz {
         label(ctx, `${Math.round(f)} Hz`, w - 6, 13);
         break;
       }
+      case M_ENVFILTER: {
+        // the filter where the envelope has it now, swept between its closed and open cutoffs
+        const top = Math.min(20000, k[1] * Math.pow(2, k[2])), e = k[6] > 0.5 ? 1 - live.live : live.live;
+        const f = k[1] * Math.pow(top / k[1], e), q = 1 + k[3] * k[3] * 16, t = Math.round(k[5]);
+        if (t === 0) this.eq2.lowpass(FS, f, q); else if (t === 2) this.eq2.highpass(FS, f, q); else this.eq2.bandpass(FS, f, q);
+        grid(ctx, 6, w - 6, h);
+        curve(ctx, accent, 6, w - 6, h, (fr) => 20 * Math.log10(this.eq2.mag(FS, fr) * (t === 1 ? 1.4 : 1) + 0.05), 30, true);
+        label(ctx, `${Math.round(f)} Hz`, w - 6, 13);
+        break;
+      }
+      case M_PITCH: {
+        // two bars: the note you play and the note it becomes, on a log frequency scale
+        const st = Math.round(k[0]) + k[1] / 100, x0 = 14, x1 = w - 14, mid = h / 2;
+        const px = (semi: number) => x0 + (x1 - x0) * (0.5 + semi / 36);
+        ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1;
+        for (let o = -24; o <= 24; o += 12) { ctx.beginPath(); ctx.moveTo(px(o), 8); ctx.lineTo(px(o), h - 8); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.fillRect(px(0) - 2, mid - 14, 4, 14);
+        ctx.globalAlpha = 0.35 + 0.65 * k[2]; ctx.fillStyle = accent; ctx.fillRect(px(st) - 2, mid, 4, 14); ctx.globalAlpha = 1;
+        label(ctx, `${st > 0 ? '+' : ''}${st.toFixed(st % 1 ? 1 : 0)} st`, w - 6, 13);
+        break;
+      }
       case M_HALL: case M_PLATE: case M_ROOM: {
         const hall = this.type === M_HALL, plate = this.type === M_PLATE;
         const x0 = 8, x1 = w - 8, base = h - 8, span = hall ? 10 : 6, decay = hall ? k[0] : plate ? k[0] : k[1], wet = hall ? k[4] : plate ? k[2] : k[3];
@@ -315,7 +343,7 @@ export class ModuleViz {
     // the older amps have a channel knob in front of the others
     const legacy = this.type < M_AMP_FIRST, o = legacy ? 1 : 0;
     const ch = legacy ? Math.round(k[0]) + AMP_VOICING_BASE[this.type] : this.type - M_AMP_FIRST, split = w * 0.6;
-    this.stack.set(FS, AMP_STACKS[ch], k[o + 3], k[o + 2], k[o + 1]);
+    this.stack.set(FS, ampStack(ch).parts, k[o + 3], k[o + 2], k[o + 1], ampStack(ch).rs);
     grid(ctx, 6, split - 6, h);
     curve(ctx, accent, 6, split - 6, h, (f) => 20 * Math.log10(this.stack.mag(FS, f)), 24);
     // the tubes: preamp stages then the power tube, lit by drive
