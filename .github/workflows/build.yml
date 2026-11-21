@@ -73,7 +73,7 @@ jobs:
           ver="${GITHUB_REF_NAME//\//-}"
           out="$PWD/Pedalboard-${ver}-${{ matrix.name }}.zip"
           cd plugin/build/Pedalboard_artefacts/Release
-          if [[ "$RUNNER_OS" == "Windows" ]]; then 7z a "$out" VST3 Standalone; else zip -r -y "$out" VST3 Standalone $( [[ "$RUNNER_OS" == "macOS" ]] && echo AU ); fi
+          if [[ "$RUNNER_OS" == "Windows" ]]; then cp "$GITHUB_WORKSPACE/LICENSE" "$GITHUB_WORKSPACE/THIRD-PARTY.md" .; 7z a "$out" VST3 Standalone LICENSE THIRD-PARTY.md; else cp "$GITHUB_WORKSPACE/LICENSE" "$GITHUB_WORKSPACE/THIRD-PARTY.md" .; zip -r -y "$out" VST3 Standalone LICENSE THIRD-PARTY.md $( [[ "$RUNNER_OS" == "macOS" ]] && echo AU ); fi
           echo "ZIP=$(basename "$out")" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4

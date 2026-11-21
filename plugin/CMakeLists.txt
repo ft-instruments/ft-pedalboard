@@ -10,7 +10,7 @@
 #   cmake --build plugin/build
 
 cmake_minimum_required(VERSION 3.22)
-project(Pedalboard VERSION 0.1.1 LANGUAGES C CXX)
+project(Pedalboard VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -97,6 +97,8 @@ add_library(pedalboard_nam OBJECT ${_nam_sources} Source/NamHost.cpp)
 target_compile_features(pedalboard_nam PUBLIC cxx_std_20)
 target_include_directories(pedalboard_nam PRIVATE
   "${_nam_dir}" "${_nam_dir}/Dependencies/eigen" "${_nam_dir}/Dependencies/nlohmann" Source)
+# MPL2 only: Eigen then refuses to include its few LGPL-licensed parts, so the licence of what is linked in stays what THIRD-PARTY.md says.
+target_compile_definitions(pedalboard_nam PRIVATE EIGEN_MPL2_ONLY)
 set_target_properties(pedalboard_nam PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(Pedalboard
