@@ -1,4 +1,4 @@
-// Small numeric helpers shared by the DSP. C++ port of src/dsp/util.ts (shared with ft-mycelia).
+// Small numeric helpers shared by the DSP. C++ port of src/dsp/util.ts.
 //
 // Porting convention for the whole engine: a TS number is a double, a
 // Float32Array element is a float. JS does all arithmetic in double, so a

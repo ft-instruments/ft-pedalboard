@@ -289,7 +289,7 @@ body.dropping #app { outline: 2px dashed var(--accent); outline-offset: -6px; }
 }
 
 /* ---------- friendlier: readable type, plain help, amps that look like amps, pedals that look like pedals.
-   The Mycelia look stays (the dark stage, the glow, the cable, a colour per unit); what changes is that
+   The dark look stays (the dark stage, the glow, the cable, a colour per unit); what changes is that
    the small print is bigger and quieter in tone, the knobs explain themselves, and the faceplates are
    drawn as the thing they model. */
 

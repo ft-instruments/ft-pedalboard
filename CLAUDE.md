@@ -8,7 +8,7 @@ PEDALBOARD: a free guitar rack in the browser and as a VST3/AU/standalone plugin
 - Build: `npm run build`   Test: `npm run render -- test` (DSP + rack checks), `npm run render` (every rig: levels, NaNs, CPU), `npm run check` and `npm run check:plugin` (headless Chrome, after build), `npm run null-test` (C++ vs TS)   Run: `npm run dev`
 - Ships to: browser (Vite dev server); VST3/AU/standalone via `plugin/` (`plugin/build.sh` installs for this user; GitHub Actions builds macOS, Windows, Linux)
 
-First slice of proposal 04 (`~/Documents/GitHub/.claude/proposals/04-ft-pedalboard-guitar-amps-effects.md`): a small library done properly, laid out like a Guitar Rig rack.
+A rack of faceplates, each with its own knobs and a live picture of what it is doing, over a small library done properly.
 
 ## Commands
 - `npm run dev` / `build` / `typecheck`

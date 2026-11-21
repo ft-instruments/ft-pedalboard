@@ -19,7 +19,7 @@ const char* mimeFor(const juce::String& file) {
 }
 
 // Linux: on NVIDIA, WebKit cannot share GPU buffers with the window and shows
-// nothing; handing frames over in shared memory works everywhere (as in ft-mycelia).
+// nothing; handing frames over in shared memory works everywhere.
 void webkitEnv() {
  #if JUCE_LINUX
   setenv("WEBKIT_DMABUF_RENDERER_FORCE_SHM", "1", 0);

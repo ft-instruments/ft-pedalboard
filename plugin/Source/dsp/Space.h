@@ -1,5 +1,5 @@
 // The time-based modules: tape echo, spring tank and hall. C++ ports of
-// src/dsp/delay.ts, spring.ts and reverb.ts (the hall is ft-mycelia's).
+// src/dsp/delay.ts, spring.ts and reverb.ts.
 #pragma once
 
 #include <vector>
@@ -215,7 +215,7 @@ private:
   double lastTone = -1, maxLH = 1;
 };
 
-// ---- reverb.ts (ft-mycelia's hall) -------------------------------------------
+// ---- reverb.ts (hall) --------------------------------------------------------
 
 class PitchUp {
 public:

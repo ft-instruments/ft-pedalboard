@@ -1,4 +1,4 @@
-// Hall reverb (from ft-mycelia): 8-line feedback delay network (Householder mixing) with
+// Hall reverb: 8-line feedback delay network (Householder mixing) with
 // slowly modulated read positions (no metallic ringing, chorus-like
 // bloom), per-line damping and high-pass, input diffusion and pre-delay.
 // Optional "shimmer": an octave-up granular pitch shifter in the feedback
