@@ -26,7 +26,7 @@ inline std::unique_ptr<IR> prepareIR(const float* data, int count) {
   for (int i = 0; i < n; i++) {
     const double v = data[i];
     if (!std::isfinite(v)) return nullptr;
-    const double w = i >= n - fade ? 0.5 + 0.5 * std::cos(M_PI * (i - (n - fade)) / fade) : 1.0;
+    const double w = i >= n - fade ? 0.5 + 0.5 * std::cos(PI * (i - (n - fade)) / fade) : 1.0;
     ir->h[i] = v * w; e += ir->h[i] * ir->h[i];
   }
   if (e < 1e-12) return nullptr;
