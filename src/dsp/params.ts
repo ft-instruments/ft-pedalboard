@@ -85,8 +85,7 @@ const K = (m: string, id: string, name: string, min: number, max: number, def: n
   P(id, name, m, min, max, def, scale, unit, labels);
 const drive = (id: string, name: string, blurb: string, accent: string, gain = 'gain', tone = 'tone'): ModuleDef => ({
   id, name, cat: 'drive', blurb, accent, stereo: false,
-  // level: the output pot, in dB under the circuit's own output (0 dB = full up). It used to read +12 there and 0 at the
-  // default, which looked like unity; the stored 0..1 values are the same
+  // level: the output pot, in dB under the circuit's own output (0 dB = full up).
   knobs: [K(id, 'gain', gain, 0, 1, 0.5), K(id, 'tone', tone, 0, 1, 0.5), K(id, 'level', 'level', -36, 0, -12, 'lin', 'dB')],
 });
 

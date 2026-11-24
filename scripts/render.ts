@@ -180,7 +180,7 @@ if (mode === 'test') {
     check(worst < 3, `T10 stack solver vs Yeh-Smith closed form (1M load): worst ${worst.toFixed(2)} dB`);
   }
 
-  // ---- acceptance tests from the amp dossier (08-testing-without-listening.md)
+  // ---- acceptance tests for the amps: stage gains, harmonics, bias-shift recovery, stack loss
   {
     const g = (k: number) => 20 * Math.log10(Math.abs(new StageTable(STAGE_KINDS[k]).gain));
     check(g(0) > 35 && g(0) < 39, `T1 12AX7 100k / 1.5k bypassed: ${g(0).toFixed(1)} dB (36-38)`);
@@ -275,7 +275,7 @@ if (mode === 'test') {
     }
     check(worst < -100, `oversampler: tones at 28-100 kHz fold into the audio band at ${worst.toFixed(0)} dB or less (>= 100 dB rejection)`);
   }
-  // ---- acceptance tests from the pedal dossier (pedals-01/02/04): drives in volts, at the level pot full (+12)
+  // ---- acceptance tests for the pedals: drives in volts, at the level pot full (+12)
   {
     const sine = (f: number, a: number, s: number) => { const x = new Float32Array(Math.round(s * FS)); for (let i = 0; i < x.length; i++) x[i] = a * Math.sin(2 * Math.PI * f * i / FS); return x; };
     const drv = (type: number, gain: number, tone: number, x: Float32Array, srcR = BUFFER_R, srcL = 0) => {
@@ -323,7 +323,7 @@ if (mode === 'test') {
       const notch = Math.min(mag(800), mag(1000), mag(1200)), scoop = (mag(100) + mag(8000)) / 2 - notch;
       check(scoop > 5 && scoop < 10, `P2 muff tone stack at noon: ${scoop.toFixed(1)} dB scoop near 1 kHz`);
     }
-    // P3 / P4 / P5: what folds back from full gain and a 0.5 V sine (dossier target: below -80 dB; hard clippers at 8x can't reach it)
+    // P3 / P4 / P5: what folds back from full gain and a 0.5 V sine (target: below -80 dB; hard clippers at 8x can't reach it)
     {
       const lim: [number, string, number][] = [[DRIVE_GLOW, 'glow', -100], [DRIVE_RASP, 'rasp', -85], [DRIVE_MUFF, 'muff', -90], [DRIVE_BOOST, 'boost', -100], [DRIVE_TRANSPARENT, 'transparent', -100], [DRIVE_METAL, 'metal', -95], [DRIVE_OCTAVE, 'octave', -100], [DRIVE_FUZZ, 'fuzz', -70]];
       for (const [t, name, l] of lim) {
@@ -359,7 +359,7 @@ if (mode === 'test') {
       check(Math.abs(tilt) < 2 && heel > 400 && heel < 500 && toe > 2000 && toe < 2500 && red > 10 && red < 16,
         `P9 wah: toe ${tilt >= 0 ? '+' : ''}${tilt.toFixed(1)} dB re heel in power (was +2), peaks at ${heel.toFixed(0)} / ${toe.toFixed(0)} Hz, ${red.toFixed(1)} dB less gain at 1 V (Holters ~13)`);
     }
-    // P13: the compressor at its fastest release doesn't ride a low note's waveform (dossier: hold >= 2 periods of 80 Hz)
+    // P13: the compressor at its fastest release doesn't ride a low note's waveform (it must hold the peak for at least 2 periods of 80 Hz)
     {
       const c = new Comp(FS), x = sine(100, 0.3, 1);
       for (let o = 0; o < x.length; o += BLOCK) c.process(x.subarray(o, o + BLOCK), BLOCK, 1, 0.0005, 0.05, 0, 1);
@@ -373,7 +373,7 @@ if (mode === 'test') {
       for (let o = 0; o < n; o += BLOCK) { g.process(x.subarray(o, o + BLOCK), BLOCK, -62, 0.08); const st = g.reduction < 0.5 ? 1 : 0; if (last >= 0 && st !== last) flips++; last = st; }
       check(flips <= 1, `gate on a 4 s decay through its threshold: ${flips} open/close changes`);
     }
-    // the guitar-tone unit with both knobs at 10 is transparent on a real guitar's DI (it used to load the pickup a second time)
+    // the guitar-tone unit with both knobs at 10 is transparent on a real guitar's DI
     {
       let worst = 0;
       for (const f of [50, 500, 2000, 4000, 6000, 10000, 16000]) {
@@ -447,7 +447,7 @@ if (mode === 'test') {
     const pluckAt = (fs: number, secs: number, notes: number[], pk: number) => {
       const n = Math.round(fs * secs), y = new Float32Array(n);
       for (const f0 of notes) for (let k = 1; k <= 12 && f0 * k < fs / 2.2; k++) for (let i = 0; i < n; i++) y[i] += Math.exp(-i / fs * (1.2 + 0.5 * k)) * Math.sin(2 * Math.PI * f0 * k * i / fs + k) / k;
-      // the pick: a 2 ms burst of noise (the old solve failed on this kind of edge)
+      // the pick: a 2 ms burst of noise (a hard edge for the solver)
       let r = 7; for (let i = 0; i < Math.min(n, fs * 0.01); i++) { r = (r * 1103515245 + 12345) % 2147483648; y[i] += 2 * (r / 2147483648 - 0.5) * Math.exp(-i / (0.002 * fs)); }
       let m = 0; for (let i = 0; i < n; i++) m = Math.max(m, Math.abs(y[i]));
       for (let i = 0; i < n; i++) y[i] *= pk / m;
@@ -548,7 +548,7 @@ if (mode === 'test') {
       check(ok, `aliasing at 44.1 kHz, full gain (inharmonic re total, worst tone): ${rows.join(', ')} dB`);
     }
     // the power stage: a Deluxe Reverb (blackface, volume at 5) is at full power from ~63 mV peak at 1 kHz (Robinette:
-    // 37 mV RMS gives 15 of its 22 W); the old scaling needed 1.27 V with the master full and never got there at 0.4
+    // 37 mV RMS gives 15 of its 22 W)
     {
       const fp = (v: number, gain: number) => {
         const at = (a: number) => { const amp = new Amp(FS), x = new Float32Array(BLOCK); let ph = 0, h = 0;

@@ -74,7 +74,7 @@ export class Chorus {
     const base = 0.0075 * fs, swing = depth * 0.0048 * fs;
     const inc = rate / fs;
     // the BBD's anti-alias filter in front of the line and its reconstruction filter after it (together
-    // -3 dB where the old single pole was)
+    // -3 dB at the same corner as a single pole)
     const lpA = 1 - Math.exp(-TWO_PI * Math.min(0.4 * fs, 3900 + tone * 14800) / fs);
     const dry = 1 - mix;
     let idx = this.idx, ph = this.phase, lpL = this.lpL, lpR = this.lpR, inL = this.inL, inR = this.inR;

@@ -20,7 +20,7 @@
 /** Component values. `topo` 0: bass/middle/treble (TMB); 1: the Vox top boost (TMB without a middle pot: R3 is fixed); 2: a James-type network (separate bass and treble paths). */
 export interface StackParts { topo: number; R1: number; R2: number; R3: number; R4: number; C1: number; C2: number; C3: number }
 
-// values: Yeh's thesis (Figs 2.2-2.4) and the schematic values tabulated in the dossier (02-tone-stacks.md)
+// values: Yeh's thesis (Figs 2.2-2.4) and the published schematic values
 /** '59 Bassman 5F6-A (Yeh Fig 2.2 with Guitarix's 56k slope). */
 export const STACK_BASSMAN: StackParts = { topo: 0, R1: 250e3, R2: 1e6, R3: 25e3, R4: 56e3, C1: 250e-12, C2: 20e-9, C3: 20e-9 };
 /** JCM800 (Yeh Fig 2.2). */

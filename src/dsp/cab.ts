@@ -7,8 +7,7 @@
 // below that, too slow for a 6 ms FIR, is a high-pass and a bump at the
 // same resonance the power amp sees in SPEAKERS. The responses are built
 // once per sample rate at five mic positions (dust cap to cone edge); the
-// knob interpolates between neighbours. A loader for measured IRs can sit
-// beside it later.
+// knob interpolates between neighbours.
 
 import { Biquad } from './util.ts';
 
@@ -51,7 +50,7 @@ export function speakerZ(sp: Speaker, f: number): number {
 
 /**
  * Each cabinet's acoustic voice, drawn from the speakers' published data and
- * the general shape of a close-miked guitar speaker (dossier 04): the box
+ * the general shape of a close-miked guitar speaker: the box
  * resonance (the same `fs` the power amp sees in SPEAKERS) with its bump and
  * a 12 dB/oct fall below, an open back's extra low loss, the low-mid dip,
  * the broad presence rise of the cone, a set of narrow break-up peaks and

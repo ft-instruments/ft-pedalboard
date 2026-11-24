@@ -13,9 +13,7 @@
 // applies only what the knobs change: the pickup node's response is
 // (1 + s rt Ct) / D(s), D a cubic in s (coil, cable, tone cap), so the unit is
 // D_ref(s) / D(s) times (1 + s rt Ct) / (1 + s rt_ref Ct), with ref = both
-// knobs at 10: there it is exactly transparent. (It used to divide out a bare
-// 1M and a short cable and then load the pickup with the pots and a long
-// cable again: at 10/10 that was +1.2 dB at 5 kHz and -11 dB at 12 kHz.)
+// knobs at 10: there it is exactly transparent.
 //
 // The volume is the pot's divider (an audio taper) with a 1 nF treble bleed
 // across its top half, then the cable against the pot's resistance: rolled

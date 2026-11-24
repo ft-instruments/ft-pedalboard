@@ -39,7 +39,7 @@
 // impedance (cab.ts SPEAKERS: the voice coil plus the resonance in its box),
 // with the feedback lowering the output impedance by (1 + loop gain). So a
 // no-feedback amp gets the +8-10 dB at the speaker's resonance and the
-// rising top that the dossier computes for a V30, a Marshall-type a few dB,
+// rising top that a V30 shows, a Marshall-type a few dB,
 // and the power tubes clip on that response (more bass current, more sag).
 // Presence takes feedback away above ~3 kHz. The supply sags with the
 // current drawn. The output transformer's primary inductance is the 55 Hz
